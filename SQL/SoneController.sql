@@ -1,9 +1,11 @@
+/*This script doesnt create the database in MSSQL it only creates the table objects.
+Create a Database first before tryin to run this script.*/
 USE SoneController;
 GO
 
 SET XACT_ABORT ON
 
---Drops Tables
+--Drops Table if it exist.
 IF OBJECT_ID('Events.Orders', 'U')		IS NOT NULL DROP TABLE Events.Orders
 IF OBJECT_ID('Events.Course', 'U')		IS NOT NULL DROP TABLE Events.Course
 IF OBJECT_ID('Config.Room', 'U')		IS NOT NULL DROP TABLE Config.Room
@@ -12,12 +14,13 @@ IF OBJECT_ID('Config.Sone', 'U')		IS NOT NULL DROP TABLE Config.Sone
 IF OBJECT_ID('Assets.Switches', 'U')	IS NOT NULL DROP TABLE Assets.Switches
 IF OBJECT_ID('Assets.Models', 'U')		IS NOT NULL DROP TABLE Assets.Models
 
---Drop Schemas
+--Drop Schema if it exist.
 IF SCHEMA_ID('Assets')	IS NOT NULL DROP SCHEMA Assets;
 IF SCHEMA_ID('Config')	IS NOT NULL DROP SCHEMA Config;
 IF SCHEMA_ID('Events')	IS NOT NULL DROP SCHEMA Events;
 GO
 
+--Create all schemas
 CREATE SCHEMA Assets;
 GO
 CREATE SCHEMA Config;
@@ -25,6 +28,8 @@ GO
 CREATE SCHEMA Events;
 GO
 
+--Create all tables
+--The order the tables are important because the FK reference table needs to exist before adding a FK.
 CREATE TABLE Assets.Models
 (
 	ModelID		INT			NOT NULL,
@@ -112,7 +117,7 @@ CREATE TABLE Events.Course
 	FOREIGN KEY			(SoneID)
 	REFERENCES			Config.Sone,
 	CONSTRAINT			CK_Start_lt_End
-	CHECK				(StartDate < EndDate)
+	CHECK				(StartDate < EndDate) --Check for StartDate is less than EndDate
 );
 GO
 
