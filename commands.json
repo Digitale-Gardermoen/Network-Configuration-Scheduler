@@ -1,0 +1,20 @@
+{
+	"switchport": {
+		"_count":2,
+		"access":{
+			"_count":1,
+			"vlan":{
+				"_count":1,
+				"_value":123
+			}
+		},
+		"mode":{
+			"_count":1,
+			"_value":"access"
+		}
+	},
+	"cdp":{
+		"_count":1,
+		"_value":"enable"
+	}
+}
