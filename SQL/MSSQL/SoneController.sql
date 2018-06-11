@@ -10,6 +10,9 @@ IF OBJECT_ID('dbo.CatchErrors', 'U')		IS NOT NULL DROP TABLE dbo.CatchErrors
 IF OBJECT_ID('dbo.ErrorHandling')			IS NOT NULL DROP PROCEDURE dbo.ErrorHandling
 
 --Drop Procedures.
+IF OBJECT_ID('Assets.GetModels')			IS NOT NULL DROP PROCEDURE Assets.GetModels
+IF OBJECT_ID('Assets.UpdateModel')			IS NOT NULL DROP PROCEDURE Assets.UpdateModel
+IF OBJECT_ID('Assets.RemoveModel')			IS NOT NULL DROP PROCEDURE Assets.RemoveModel
 IF OBJECT_ID('Assets.AddModel')				IS NOT NULL DROP PROCEDURE Assets.AddModel
 
 --Drops Tables.
@@ -17,7 +20,8 @@ IF OBJECT_ID('OrderDetails.Orders', 'U')	IS NOT NULL DROP TABLE OrderDetails.Ord
 IF OBJECT_ID('OrderDetails.Course', 'U')	IS NOT NULL DROP TABLE OrderDetails.Course
 IF OBJECT_ID('Config.Room', 'U')			IS NOT NULL DROP TABLE Config.Room
 IF OBJECT_ID('Config.PortConfig', 'U')		IS NOT NULL DROP TABLE Config.PortConfig
-IF OBJECT_ID('Config.Sone', 'U')			IS NOT NULL DROP TABLE Config.Sone
+IF OBJECT_ID('Config.VLANs', 'U')			IS NOT NULL DROP TABLE Config.VLANs
+IF OBJECT_ID('Config.Sones', 'U')			IS NOT NULL DROP TABLE Config.Sones
 IF OBJECT_ID('Assets.Switches', 'U')		IS NOT NULL DROP TABLE Assets.Switches
 IF OBJECT_ID('Assets.Models', 'U')			IS NOT NULL DROP TABLE Assets.Models
 
@@ -50,7 +54,7 @@ GO
 CREATE TABLE Assets.Models
 (
 	ModelID		INT	IDENTITY(1,1)	NOT NULL,
-	SwitchModel	VARCHAR(20)			NOT NULL,
+	SwitchModel	NVARCHAR(20)		NOT NULL,
 	CONSTRAINT	PK_ModelID
 	PRIMARY KEY	(ModelID)
 );
@@ -59,7 +63,7 @@ GO
 CREATE TABLE Assets.Switches
 (
     SwitchID	INT	IDENTITY(1,1)	NOT NULL,
-    SwitchName	VARCHAR(12)			NOT NULL,
+    SwitchName	NVARCHAR(12)		NOT NULL,
 	ModelID		INT					NOT NULL,
 	PortSpeed	INT					NOT NULL,
 	CONSTRAINT	PK_SwitchID
@@ -70,12 +74,28 @@ CREATE TABLE Assets.Switches
 );
 GO
 
-CREATE TABLE Config.Sone
+CREATE TABLE Config.Sones
 (
 	SoneID		INT	IDENTITY(1,1)	NOT NULL,
-	SoneName	VARCHAR(9)			NOT NULL,
+	SoneName	NVARCHAR(9)			NOT NULL,
 	CONSTRAINT	PK_SoneID
 	PRIMARY KEY	(SoneID)
+);
+GO
+
+CREATE TABLE Config.VLANs
+(
+	VLANID		INT	NOT NULL,
+	SwitchID	INT	NOT NULL,
+	SoneID		INT	NOT NULL,
+	CONSTRAINT	PK_VLANs
+	PRIMARY KEY	(VLANID, SwitchID, SoneID),
+	CONSTRAINT	FK_Switches_SwitchID_VLANs
+	FOREIGN KEY	(SwitchID)
+	REFERENCES	Assets.Switches,
+	CONSTRAINT	FK_Sones_SoneID_VLANs
+	FOREIGN KEY	(SoneID)
+	REFERENCES	Config.Sones
 );
 GO
 
@@ -83,7 +103,7 @@ CREATE TABLE Config.PortConfig
 (
     SwitchID	INT	IDENTITY(1,1)	NOT NULL,
     SoneID		INT					NOT NULL,
-	Config		VARCHAR(200)		NOT NULL,
+	Config		NVARCHAR(200)		NOT NULL,
 	CONSTRAINT	PK_SwitchID_SoneID
 	PRIMARY KEY	(SwitchID, SoneID),
 	CONSTRAINT	FK_Switches_SwitchID_PortConfig
@@ -91,7 +111,7 @@ CREATE TABLE Config.PortConfig
 	REFERENCES	Assets.Switches,
 	CONSTRAINT	FK_Sone_SoneiD_PortConfig
 	FOREIGN KEY	(SoneID)
-	REFERENCES	Config.Sone
+	REFERENCES	Config.Sones
 );
 GO
 
@@ -99,7 +119,7 @@ CREATE TABLE Config.Room
 (
     RoomID		INT	IDENTITY(1,1)	NOT NULL,
     SwitchID	INT					NOT NULL,
-	RoomName	VARCHAR(50)			NOT NULL UNIQUE,
+	RoomName	NVARCHAR(50)		NOT NULL UNIQUE,
 	PortRange	INT					NULL,
 	SoneID		INT					NULL,
 	VLAN		INT					NULL,
@@ -110,7 +130,7 @@ CREATE TABLE Config.Room
 	REFERENCES	Assets.Switches,
 	CONSTRAINT	FK_Sone_SoneiD_Room
 	FOREIGN KEY	(SoneID)
-	REFERENCES	Config.Sone
+	REFERENCES	Config.Sones
 );
 GO
 
@@ -119,12 +139,12 @@ CREATE TABLE OrderDetails.Course
 	CourseID			INT IDENTITY(1,1)	NOT NULL,
 	RoomID				INT					NOT NULL,
 	SoneID				INT					NULL,
-	CourseTitle			VARCHAR(30)			NOT NULL,
-	CourseDescription	VARCHAR(250)		NULL,
+	CourseTitle			NVARCHAR(30)		NOT NULL,
+	CourseDescription	NVARCHAR(250)		NULL,
 	StartDate			DATETIME			NOT NULL,
 	EndDate				DATETIME			NOT NULL,
-	Organizer			VARCHAR(30)			NULL,
-	CourseTrainer		VARCHAR(30)			NULL,
+	Organizer			NVARCHAR(30)		NULL,
+	CourseTrainer		NVARCHAR(30)		NULL,
 	CONSTRAINT			PK_CourseID
 	PRIMARY KEY			(CourseID),
 	CONSTRAINT			FK_Room_RoomID_Course
@@ -132,7 +152,7 @@ CREATE TABLE OrderDetails.Course
 	REFERENCES			Config.Room,
 	CONSTRAINT			FK_Sone_SoneiD_Course
 	FOREIGN KEY			(SoneID)
-	REFERENCES			Config.Sone,
+	REFERENCES			Config.Sones,
 	CONSTRAINT			CK_Start_lt_End
 	CHECK				(StartDate < EndDate) --Check for StartDate is less than EndDate
 );
@@ -141,7 +161,7 @@ GO
 CREATE TABLE OrderDetails.Orders
 (
 	OrderID		INT	IDENTITY(1,1)	NOT NULL,
-	OrderBy		VARCHAR(30)			NULL,
+	OrderBy		NVARCHAR(30)		NULL,
 	CourseID	INT					NOT NULL,
 	OrderDate	DATETIME			NOT NULL,
 	CONSTRAINT	PK_OrderID
@@ -186,7 +206,7 @@ GO
 --Create stored procedures for CRUD handling.
 --Assets.Models stored procs:
 CREATE PROCEDURE Assets.AddModel(
-	@ModelName	VARCHAR(20)
+	@ModelName	NVARCHAR(20)
 )
 AS
 BEGIN TRY
@@ -195,16 +215,100 @@ BEGIN TRY
 			BEGIN
 				INSERT INTO Assets.Models(SwitchModel)
 				VALUES		(@ModelName)
-				COMMIT TRANSACTION
+				COMMIT TRANSACTION;
 			END
 		ELSE
-			PRINT 'Model('+@ModelName+') already exists.'
-			ROLLBACK TRANSACTION
+			BEGIN
+				PRINT 'Model('+@ModelName+') already exists.'
+				ROLLBACK TRANSACTION;
+			END
 	IF @@TRANCOUNT <> 0
-		ROLLBACK TRANSACTION
+		BEGIN
+			ROLLBACK TRANSACTION;
+		END
 END TRY
 BEGIN CATCH
 	EXEC dbo.ErrorHandling
+END CATCH;
+GO
+
+CREATE PROCEDURE Assets.RemoveModel(
+	@ModelID	INT,
+	@ModelName	NVARCHAR(20) OUTPUT
+)
+AS
+BEGIN TRY
+	BEGIN TRANSACTION
+		IF @ModelID IS NULL
+			BEGIN
+				ROLLBACK TRANSACTION;
+				PRINT 'MODEL ID IS ZERO'
+			END
+		ELSE
+			BEGIN
+				DELETE FROM Assets.Models
+				OUTPUT		deleted.SwitchModel
+				WHERE		ModelID = @ModelID
+				COMMIT TRANSACTION;
+			END
+	IF @@TRANCOUNT <> 0
+		BEGIN
+			ROLLBACK TRANSACTION;
+		END
+END TRY
+BEGIN CATCH
+	EXEC dbo.ErrorHandling
+END CATCH;
+GO
+
+CREATE PROCEDURE Assets.UpdateModel(
+	@ModelID	INT,
+	@ModelName	NVARCHAR(20)
+)
+AS
+BEGIN TRY
+	BEGIN TRANSACTION
+		IF @ModelID IS NULL
+			BEGIN
+				ROLLBACK TRANSACTION;
+				PRINT 'MODEL ID IS ZERO'
+			END
+		ELSE
+			BEGIN
+				UPDATE	Assets.Models
+				SET		SwitchModel = @ModelName
+				WHERE	ModelID = @ModelID
+				COMMIT TRANSACTION;
+			END
+	IF @@TRANCOUNT <> 0
+		BEGIN
+			ROLLBACK TRANSACTION;
+		END
+END TRY
+BEGIN CATCH
+	EXEC dbo.ErrorHandling;
+END CATCH;
+GO
+
+CREATE PROCEDURE Assets.GetModels(
+	@ModelName	INT = NULL
+)
+AS
+BEGIN TRY
+	IF @ModelName IS NULL
+		BEGIN
+			SELECT	SwitchModel
+			FROM	Assets.Models
+		END
+	ELSE
+		BEGIN
+			SELECT	SwitchModel
+			FROM	Assets.Models
+			WHERE	SwitchModel LIKE '%'+@ModelName+'%' --Might have to change this depending on what we want to filter, this will scan the table.
+		END
+END TRY
+BEGIN CATCH
+	EXEC dbo.ErrorHandling;
 END CATCH;
 GO
 
