@@ -7,13 +7,14 @@ SET XACT_ABORT ON
 
 --Drop ErrorHandling
 IF OBJECT_ID('dbo.CatchErrors', 'U')		IS NOT NULL DROP TABLE dbo.CatchErrors
-IF OBJECT_ID('dbo.ErrorHandling')			IS NOT NULL DROP PROCEDURE dbo.ErrorHandling
+IF OBJECT_ID('dbo.ErrorHandling', 'P')		IS NOT NULL DROP PROCEDURE dbo.ErrorHandling
 
 --Drop Procedures.
-IF OBJECT_ID('Assets.GetModels')			IS NOT NULL DROP PROCEDURE Assets.GetModels
-IF OBJECT_ID('Assets.UpdateModel')			IS NOT NULL DROP PROCEDURE Assets.UpdateModel
-IF OBJECT_ID('Assets.RemoveModel')			IS NOT NULL DROP PROCEDURE Assets.RemoveModel
-IF OBJECT_ID('Assets.AddModel')				IS NOT NULL DROP PROCEDURE Assets.AddModel
+IF OBJECT_ID('Assets.AddSwitch', 'P')		IS NOT NULL DROP PROCEDURE Assets.AddSwitch
+IF OBJECT_ID('Assets.GetModels', 'P')		IS NOT NULL DROP PROCEDURE Assets.GetModels
+IF OBJECT_ID('Assets.UpdateModel', 'P')		IS NOT NULL DROP PROCEDURE Assets.UpdateModel
+IF OBJECT_ID('Assets.RemoveModel', 'P')		IS NOT NULL DROP PROCEDURE Assets.RemoveModel
+IF OBJECT_ID('Assets.AddModel', 'P')		IS NOT NULL DROP PROCEDURE Assets.AddModel
 
 --Drops Tables.
 IF OBJECT_ID('OrderDetails.Orders', 'U')	IS NOT NULL DROP TABLE OrderDetails.Orders
@@ -26,12 +27,12 @@ IF OBJECT_ID('Assets.Switches', 'U')		IS NOT NULL DROP TABLE Assets.Switches
 IF OBJECT_ID('Assets.Models', 'U')			IS NOT NULL DROP TABLE Assets.Models
 
 --Drop Sequence
-IF OBJECT_ID('dbo.IDCounter')	IS NOT NULL DROP SEQUENCE dbo.IDCounter;
+IF OBJECT_ID('dbo.IDCounter', 'SO')			IS NOT NULL DROP SEQUENCE dbo.IDCounter;
 
 --Drop Schema if it exist.
-IF SCHEMA_ID('Assets')			IS NOT NULL DROP SCHEMA Assets;
-IF SCHEMA_ID('Config')			IS NOT NULL DROP SCHEMA Config;
-IF SCHEMA_ID('OrderDetails')	IS NOT NULL DROP SCHEMA OrderDetails;
+IF SCHEMA_ID('Assets')						IS NOT NULL DROP SCHEMA Assets;
+IF SCHEMA_ID('Config')						IS NOT NULL DROP SCHEMA Config;
+IF SCHEMA_ID('OrderDetails')				IS NOT NULL DROP SCHEMA OrderDetails;
 GO
 
 --Create all schemas
@@ -70,7 +71,9 @@ CREATE TABLE Assets.Switches
 	PRIMARY KEY	(SwitchID),
 	CONSTRAINT	FK_Models_ModelID_Switches
 	FOREIGN KEY	(ModelID)
-	REFERENCES	Assets.Models
+	REFERENCES	Assets.Models,
+	CONSTRAINT	UQ_SwitchName
+	UNIQUE		(SwitchName)
 );
 GO
 
@@ -309,6 +312,35 @@ BEGIN TRY
 END TRY
 BEGIN CATCH
 	EXEC dbo.ErrorHandling;
+END CATCH;
+GO
+
+CREATE PROCEDURE Assets.AddSwitch(
+	@SwitchName NVARCHAR(12) = N'',
+	@ModelID	INT,
+	@Speed		INT
+)
+AS
+BEGIN TRY
+	BEGIN TRANSACTION
+		IF NOT EXISTS (SELECT SwitchName FROM Assets.Switches WHERE SwitchName LIKE '%'+@SwitchName+'%')
+			BEGIN
+				INSERT INTO Assets.Switches(SwitchName, ModelID, PortSpeed)
+				VALUES		(@SwitchName, @ModelID, @Speed)
+				COMMIT TRANSACTION;
+			END
+		ELSE
+			BEGIN
+				PRINT 'Switch('+@SwitchName+') already exists.'
+				ROLLBACK TRANSACTION;
+			END
+	IF @@TRANCOUNT <> 0
+		BEGIN
+			ROLLBACK TRANSACTION;
+		END
+END TRY
+BEGIN CATCH
+	EXEC dbo.ErrorHandling
 END CATCH;
 GO
 
