@@ -10,6 +10,7 @@ IF OBJECT_ID('dbo.CatchErrors', 'U')		IS NOT NULL DROP TABLE dbo.CatchErrors
 IF OBJECT_ID('dbo.ErrorHandling', 'P')		IS NOT NULL DROP PROCEDURE dbo.ErrorHandling
 
 --Drop Procedures.
+IF OBJECT_ID('Assets.AddSwitch_JSON', 'P')	IS NOT NULL DROP PROCEDURE Assets.AddSwitch_JSON
 IF OBJECT_ID('Assets.AddSwitch', 'P')		IS NOT NULL DROP PROCEDURE Assets.AddSwitch
 IF OBJECT_ID('Assets.GetModels', 'P')		IS NOT NULL DROP PROCEDURE Assets.GetModels
 IF OBJECT_ID('Assets.UpdateModel', 'P')		IS NOT NULL DROP PROCEDURE Assets.UpdateModel
@@ -365,6 +366,36 @@ BEGIN TRY
 			BEGIN
 				INSERT INTO Assets.Switches(SwitchName, ModelID, PortSpeed)
 				VALUES		(@SwitchName, @ModelID, @Speed)
+				COMMIT TRANSACTION;
+			END
+		ELSE
+			BEGIN
+				PRINT 'Switch('+@SwitchName+') already exists.'
+				ROLLBACK TRANSACTION;
+			END
+	IF @@TRANCOUNT <> 0
+		BEGIN
+			ROLLBACK TRANSACTION;
+		END
+END TRY
+BEGIN CATCH
+	EXEC dbo.ErrorHandling
+END CATCH;
+GO
+
+CREATE PROCEDURE Assets.AddSwitch_JSON(
+	@SwitchName NVARCHAR(12) = N'',
+	@ModelID	INT,
+	@Speed		INT,
+	@VLANS		NVARCHAR(200)
+)
+AS
+BEGIN TRY
+	BEGIN TRANSACTION
+		IF NOT EXISTS (SELECT SwitchName FROM Assets.Switches WHERE SwitchName LIKE '%'+@SwitchName+'%')
+			BEGIN
+				INSERT INTO Assets.Switches_JSON(SwitchName, ModelID, PortSpeed, VLANS)
+				VALUES		(@SwitchName, @ModelID, @Speed, @VLANS)
 				COMMIT TRANSACTION;
 			END
 		ELSE
