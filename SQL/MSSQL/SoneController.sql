@@ -21,6 +21,7 @@ IF OBJECT_ID('OrderDetails.Orders', 'U')	IS NOT NULL DROP TABLE OrderDetails.Ord
 IF OBJECT_ID('OrderDetails.Course', 'U')	IS NOT NULL DROP TABLE OrderDetails.Course
 IF OBJECT_ID('Config.Room', 'U')			IS NOT NULL DROP TABLE Config.Room
 IF OBJECT_ID('Config.PortConfig', 'U')		IS NOT NULL DROP TABLE Config.PortConfig
+IF OBJECT_ID('Config.ConfigJSON', 'U')		IS NOT NULL DROP TABLE Config.ConfigJSON
 IF OBJECT_ID('Config.VLANs', 'U')			IS NOT NULL DROP TABLE Config.VLANs
 IF OBJECT_ID('Config.Sones', 'U')			IS NOT NULL DROP TABLE Config.Sones
 IF OBJECT_ID('Assets.Switches', 'U')		IS NOT NULL DROP TABLE Assets.Switches
@@ -51,7 +52,7 @@ INCREMENT BY 1;
 GO
 
 --Create all tables
---The order the tables are important because the FK reference table needs to exist before adding a FK.
+--The order of the tables are important because the FK reference table needs to exist before adding a FK.
 CREATE TABLE Assets.Models
 (
 	ModelID		INT	IDENTITY(1,1)	NOT NULL,
@@ -99,6 +100,22 @@ CREATE TABLE Config.VLANs
 	CONSTRAINT	FK_Sones_SoneID_VLANs
 	FOREIGN KEY	(SoneID)
 	REFERENCES	Config.Sones
+	--This table might be removed if we are converting to a JSON format on the Swtiches table.
+);
+GO
+
+CREATE TABLE Config.ConfigJSON
+(
+	DocID	INT	IDENTITY	NOT NULL,
+	JSONDoc	NVARCHAR(4000)	NULL,
+	CONSTRAINT	PK_DocID
+	PRIMARY KEY	(DocID),
+	CONSTRAINT	CK_IFJSON_TRUE
+	CHECK		(ISJSON(JSONDoc) = 1) --Check if the inserted data is properly formated JSON.
+	--If we need an index for our documents we can generate one here, check links:
+	--Small tables: https://docs.microsoft.com/en-us/sql/relational-databases/json/store-json-documents-in-sql-tables?view=sql-server-2017#indexes
+	--Large tables: https://docs.microsoft.com/en-us/sql/relational-databases/json/store-json-documents-in-sql-tables?view=sql-server-2017#large-tables--columnstore-format
+	--Frequently changing documents: https://docs.microsoft.com/en-us/sql/relational-databases/json/store-json-documents-in-sql-tables?view=sql-server-2017#frequently-changing-documents--memory-optimized-tables
 );
 GO
 
@@ -106,7 +123,7 @@ CREATE TABLE Config.PortConfig
 (
     SwitchID	INT	IDENTITY(1,1)	NOT NULL,
     SoneID		INT					NOT NULL,
-	Config		NVARCHAR(200)		NOT NULL,
+	DocID		INT					NOT NULL,
 	CONSTRAINT	PK_SwitchID_SoneID
 	PRIMARY KEY	(SwitchID, SoneID),
 	CONSTRAINT	FK_Switches_SwitchID_PortConfig
@@ -114,7 +131,10 @@ CREATE TABLE Config.PortConfig
 	REFERENCES	Assets.Switches,
 	CONSTRAINT	FK_Sone_SoneiD_PortConfig
 	FOREIGN KEY	(SoneID)
-	REFERENCES	Config.Sones
+	REFERENCES	Config.Sones,
+	CONSTRAINT	FK_ConfigJSON_DocID_PortConfig
+	FOREIGN KEY	(DocID)
+	REFERENCES	Config.ConfigJSON
 );
 GO
 
@@ -141,7 +161,7 @@ CREATE TABLE OrderDetails.Course
 (
 	CourseID			INT IDENTITY(1,1)	NOT NULL,
 	RoomID				INT					NOT NULL,
-	SoneID				INT					NULL,
+	SoneID				INT					NULL, --Might be removed to include Sone in text instead of ID, this is still under discussion.
 	CourseTitle			NVARCHAR(30)		NOT NULL,
 	CourseDescription	NVARCHAR(250)		NULL,
 	StartDate			DATETIME			NOT NULL,
