@@ -24,6 +24,7 @@ IF OBJECT_ID('Config.PortConfig', 'U')		IS NOT NULL DROP TABLE Config.PortConfig
 IF OBJECT_ID('Config.ConfigJSON', 'U')		IS NOT NULL DROP TABLE Config.ConfigJSON
 IF OBJECT_ID('Config.VLANs', 'U')			IS NOT NULL DROP TABLE Config.VLANs
 IF OBJECT_ID('Config.Sones', 'U')			IS NOT NULL DROP TABLE Config.Sones
+IF OBJECT_ID('Assets.Switches_JSON', 'U')		IS NOT NULL DROP TABLE Assets.Switches_JSON
 IF OBJECT_ID('Assets.Switches', 'U')		IS NOT NULL DROP TABLE Assets.Switches
 IF OBJECT_ID('Assets.Models', 'U')			IS NOT NULL DROP TABLE Assets.Models
 
@@ -74,6 +75,23 @@ CREATE TABLE Assets.Switches
 	FOREIGN KEY	(ModelID)
 	REFERENCES	Assets.Models,
 	CONSTRAINT	UQ_SwitchName
+	UNIQUE		(SwitchName)
+);
+GO
+
+CREATE TABLE Assets.Switches_JSON
+(
+    SwitchID	INT	IDENTITY(1,1)	NOT NULL,
+    SwitchName	NVARCHAR(12)		NOT NULL,
+	ModelID		INT					NOT NULL,
+	PortSpeed	INT					NOT NULL,
+	VLANS		NVARCHAR(200)		NOT NULL,
+	CONSTRAINT	PK_SwitchID_JSON
+	PRIMARY KEY	(SwitchID),
+	CONSTRAINT	FK_Models_ModelID_Switches_JSON
+	FOREIGN KEY	(ModelID)
+	REFERENCES	Assets.Models,
+	CONSTRAINT	UQ_SwitchName_JSON
 	UNIQUE		(SwitchName)
 );
 GO
