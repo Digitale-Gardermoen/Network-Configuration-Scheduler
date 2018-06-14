@@ -5,9 +5,9 @@ GO
 
 SET XACT_ABORT ON
 
---Drop ErrorHandling
+--Drop ErrorLogging
 IF OBJECT_ID('dbo.CatchErrors', 'U')		IS NOT NULL DROP TABLE dbo.CatchErrors
-IF OBJECT_ID('dbo.ErrorHandling', 'P')		IS NOT NULL DROP PROCEDURE dbo.ErrorHandling
+IF OBJECT_ID('dbo.ErrorLogging', 'P')		IS NOT NULL DROP PROCEDURE dbo.ErrorLogging
 
 --Drop Procedures.
 IF OBJECT_ID('Assets.AddSwitch_JSON', 'P')	IS NOT NULL DROP PROCEDURE Assets.AddSwitch_JSON
@@ -86,7 +86,8 @@ CREATE TABLE Assets.Switches_JSON
     SwitchName	NVARCHAR(12)		NOT NULL,
 	ModelID		INT					NOT NULL,
 	PortSpeed	INT					NOT NULL,
-	VLANS		NVARCHAR(200)		NOT NULL,
+	Sones		NVARCHAR(200)		NOT NULL,--JSON
+	VLANS		NVARCHAR(200)		NOT NULL,--JSON
 	CONSTRAINT	PK_SwitchID_JSON
 	PRIMARY KEY	(SwitchID),
 	CONSTRAINT	FK_Models_ModelID_Switches_JSON
@@ -103,6 +104,7 @@ CREATE TABLE Config.Sones
 	SoneName	NVARCHAR(9)			NOT NULL,
 	CONSTRAINT	PK_SoneID
 	PRIMARY KEY	(SoneID)
+	--This table might be removed if we are converting to a JSON format on the Swtiches table.
 );
 GO
 
@@ -123,7 +125,7 @@ CREATE TABLE Config.VLANs
 );
 GO
 
-CREATE TABLE Config.ConfigJSON
+CREATE TABLE Config.ConfigJSON--Might be replaced by textfiles with config code.
 (
 	DocID	INT	IDENTITY	NOT NULL,
 	JSONDoc	NVARCHAR(4000)	NULL,
@@ -180,7 +182,7 @@ CREATE TABLE OrderDetails.Course
 (
 	CourseID			INT IDENTITY(1,1)	NOT NULL,
 	RoomID				INT					NOT NULL,
-	SoneID				INT					NULL, --Might be removed to include Sone in text instead of ID, this is still under discussion.
+	SoneID				INT					NULL, --Might be replaced to include Sone in text instead of ID, this is still under discussion.
 	CourseTitle			NVARCHAR(30)		NOT NULL,
 	CourseDescription	NVARCHAR(250)		NULL,
 	StartDate			DATETIME			NOT NULL,
@@ -225,12 +227,13 @@ CREATE TABLE dbo.CatchErrors
 	ErrorState		INT					NULL,
 	ErrorLine		INT					NULL,
 	ErrorProcedure	NVARCHAR(128)		NULL,
+	ErrorXACTSTATE	SMALLINT			NULL,
 	CONSTRAINT		PK_AuditErrors
 	PRIMARY KEY		(OccurrenceID)
 );
 GO
 
-CREATE PROCEDURE dbo.ErrorHandling
+CREATE PROCEDURE dbo.ErrorLogging
 AS
 	INSERT INTO dbo.CatchErrors
 	VALUES		(
@@ -240,7 +243,8 @@ AS
 					ERROR_SEVERITY(),
 					ERROR_STATE(),
 					ERROR_LINE(),
-					ERROR_PROCEDURE()
+					ERROR_PROCEDURE(),
+					XACT_STATE()
 				);
 	PRINT 'Error was logged with ID: ' + @@IDENTITY
 GO
@@ -252,6 +256,7 @@ CREATE PROCEDURE Assets.AddModel(
 )
 AS
 BEGIN TRY
+	SET XACT_ABORT ON;
 	BEGIN TRANSACTION
 		IF NOT EXISTS (SELECT SwitchModel FROM Assets.Models WHERE SwitchModel LIKE '%'+@ModelName+'%')
 			BEGIN
@@ -268,9 +273,18 @@ BEGIN TRY
 		BEGIN
 			ROLLBACK TRANSACTION;
 		END
+	SET XACT_ABORT OFF;
 END TRY
 BEGIN CATCH
-	EXEC dbo.ErrorHandling
+	EXEC dbo.ErrorLogging;
+	IF	XACT_STATE() = -1
+		BEGIN
+			ROLLBACK TRANSACTION;
+		END
+	IF	XACT_STATE() = 1
+		BEGIN
+			COMMIT TRANSACTION;
+		END
 END CATCH;
 GO
 
@@ -280,6 +294,7 @@ CREATE PROCEDURE Assets.RemoveModel(
 )
 AS
 BEGIN TRY
+	SET XACT_ABORT ON;
 	BEGIN TRANSACTION
 		IF @ModelID IS NULL
 			BEGIN
@@ -297,9 +312,18 @@ BEGIN TRY
 		BEGIN
 			ROLLBACK TRANSACTION;
 		END
+	SET XACT_ABORT OFF;
 END TRY
 BEGIN CATCH
-	EXEC dbo.ErrorHandling
+	EXEC dbo.ErrorLogging;
+	IF	XACT_STATE() = -1
+		BEGIN
+			ROLLBACK TRANSACTION;
+		END
+	IF	XACT_STATE() = 1
+		BEGIN
+			COMMIT TRANSACTION;
+		END
 END CATCH;
 GO
 
@@ -309,6 +333,7 @@ CREATE PROCEDURE Assets.UpdateModel(
 )
 AS
 BEGIN TRY
+	SET XACT_ABORT ON;
 	BEGIN TRANSACTION
 		IF @ModelID IS NULL
 			BEGIN
@@ -326,9 +351,18 @@ BEGIN TRY
 		BEGIN
 			ROLLBACK TRANSACTION;
 		END
+	SET XACT_ABORT OFF;
 END TRY
 BEGIN CATCH
-	EXEC dbo.ErrorHandling;
+	EXEC dbo.ErrorLogging;
+	IF	XACT_STATE() = -1
+		BEGIN
+			ROLLBACK TRANSACTION;
+		END
+	IF	XACT_STATE() = 1
+		BEGIN
+			COMMIT TRANSACTION;
+		END
 END CATCH;
 GO
 
@@ -350,7 +384,15 @@ BEGIN TRY
 		END
 END TRY
 BEGIN CATCH
-	EXEC dbo.ErrorHandling;
+	EXEC dbo.ErrorLogging
+	IF	XACT_STATE() = -1
+		BEGIN
+			ROLLBACK TRANSACTION;
+		END
+	IF	XACT_STATE() = 1
+		BEGIN
+			COMMIT TRANSACTION;
+		END
 END CATCH;
 GO
 
@@ -361,6 +403,7 @@ CREATE PROCEDURE Assets.AddSwitch(
 )
 AS
 BEGIN TRY
+	SET XACT_ABORT ON;
 	BEGIN TRANSACTION
 		IF NOT EXISTS (SELECT SwitchName FROM Assets.Switches WHERE SwitchName LIKE '%'+@SwitchName+'%')
 			BEGIN
@@ -377,9 +420,18 @@ BEGIN TRY
 		BEGIN
 			ROLLBACK TRANSACTION;
 		END
+	SET XACT_ABORT OFF;
 END TRY
 BEGIN CATCH
-	EXEC dbo.ErrorHandling
+	EXEC dbo.ErrorLogging;
+	IF	XACT_STATE() = -1
+		BEGIN
+			ROLLBACK TRANSACTION;
+		END
+	IF	XACT_STATE() = 1
+		BEGIN
+			COMMIT TRANSACTION;
+		END
 END CATCH;
 GO
 
@@ -387,15 +439,17 @@ CREATE PROCEDURE Assets.AddSwitch_JSON(
 	@SwitchName NVARCHAR(12) = N'',
 	@ModelID	INT,
 	@Speed		INT,
+	@Sones		NVARCHAR(200),
 	@VLANS		NVARCHAR(200)
 )
 AS
 BEGIN TRY
+	SET XACT_ABORT ON;
 	BEGIN TRANSACTION
 		IF NOT EXISTS (SELECT SwitchName FROM Assets.Switches WHERE SwitchName LIKE '%'+@SwitchName+'%')
 			BEGIN
-				INSERT INTO Assets.Switches_JSON(SwitchName, ModelID, PortSpeed, VLANS)
-				VALUES		(@SwitchName, @ModelID, @Speed, @VLANS)
+				INSERT INTO Assets.Switches_JSON(SwitchName, ModelID, PortSpeed, Sones, VLANS)
+				VALUES		(@SwitchName, @ModelID, @Speed, @Sones, @VLANS)
 				COMMIT TRANSACTION;
 			END
 		ELSE
@@ -407,9 +461,18 @@ BEGIN TRY
 		BEGIN
 			ROLLBACK TRANSACTION;
 		END
+	SET XACT_ABORT OFF;
 END TRY
 BEGIN CATCH
-	EXEC dbo.ErrorHandling
+	EXEC dbo.ErrorLogging;
+	IF	XACT_STATE() = -1
+		BEGIN
+			ROLLBACK TRANSACTION;
+		END
+	IF	XACT_STATE() = 1
+		BEGIN
+			COMMIT TRANSACTION;
+		END
 END CATCH;
 GO
 
