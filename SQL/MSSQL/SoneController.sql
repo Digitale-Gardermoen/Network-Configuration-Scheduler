@@ -1,6 +1,6 @@
 /*This script doesnt create the database in MSSQL it only creates the table objects.
 Create a Database first before tryin to run this script.*/
-USE SoneController;
+USE ZoneController;
 GO
 
 SET XACT_ABORT ON
@@ -24,7 +24,7 @@ IF OBJECT_ID('Config.Room', 'U')			IS NOT NULL DROP TABLE Config.Room
 IF OBJECT_ID('Config.PortConfig', 'U')		IS NOT NULL DROP TABLE Config.PortConfig
 IF OBJECT_ID('Config.ConfigJSON', 'U')		IS NOT NULL DROP TABLE Config.ConfigJSON
 IF OBJECT_ID('Config.VLANs', 'U')			IS NOT NULL DROP TABLE Config.VLANs
-IF OBJECT_ID('Config.Sones', 'U')			IS NOT NULL DROP TABLE Config.Sones
+IF OBJECT_ID('Config.Zones', 'U')			IS NOT NULL DROP TABLE Config.Zones
 IF OBJECT_ID('Assets.Switches_JSON', 'U')		IS NOT NULL DROP TABLE Assets.Switches_JSON
 IF OBJECT_ID('Assets.Switches', 'U')		IS NOT NULL DROP TABLE Assets.Switches
 IF OBJECT_ID('Assets.Models', 'U')			IS NOT NULL DROP TABLE Assets.Models
@@ -86,7 +86,7 @@ CREATE TABLE Assets.Switches_JSON
     SwitchName	NVARCHAR(12)		NOT NULL,
 	ModelID		INT					NOT NULL,
 	PortSpeed	INT					NOT NULL,
-	Sones		NVARCHAR(200)		NOT NULL,--JSON
+	Zones		NVARCHAR(200)		NOT NULL,--JSON
 	VLANS		NVARCHAR(200)		NOT NULL,--JSON
 	CONSTRAINT	PK_SwitchID_JSON
 	PRIMARY KEY	(SwitchID),
@@ -98,12 +98,12 @@ CREATE TABLE Assets.Switches_JSON
 );
 GO
 
-CREATE TABLE Config.Sones
+CREATE TABLE Config.Zones
 (
-	SoneID		INT	IDENTITY(1,1)	NOT NULL,
-	SoneName	NVARCHAR(9)			NOT NULL,
-	CONSTRAINT	PK_SoneID
-	PRIMARY KEY	(SoneID)
+	ZoneID		INT	IDENTITY(1,1)	NOT NULL,
+	ZoneName	NVARCHAR(9)			NOT NULL,
+	CONSTRAINT	PK_ZoneID
+	PRIMARY KEY	(ZoneID)
 	--This table might be removed if we are converting to a JSON format on the Swtiches table.
 );
 GO
@@ -112,15 +112,15 @@ CREATE TABLE Config.VLANs
 (
 	VLANID		INT	NOT NULL,
 	SwitchID	INT	NOT NULL,
-	SoneID		INT	NOT NULL,
+	ZoneID		INT	NOT NULL,
 	CONSTRAINT	PK_VLANs
-	PRIMARY KEY	(VLANID, SwitchID, SoneID),
+	PRIMARY KEY	(VLANID, SwitchID, ZoneID),
 	CONSTRAINT	FK_Switches_SwitchID_VLANs
 	FOREIGN KEY	(SwitchID)
 	REFERENCES	Assets.Switches,
-	CONSTRAINT	FK_Sones_SoneID_VLANs
-	FOREIGN KEY	(SoneID)
-	REFERENCES	Config.Sones
+	CONSTRAINT	FK_Zones_ZoneID_VLANs
+	FOREIGN KEY	(ZoneID)
+	REFERENCES	Config.Zones
 	--This table might be removed if we are converting to a JSON format on the Swtiches table.
 );
 GO
@@ -143,16 +143,16 @@ GO
 CREATE TABLE Config.PortConfig
 (
     SwitchID	INT	IDENTITY(1,1)	NOT NULL,
-    SoneID		INT					NOT NULL,
+    ZoneID		INT					NOT NULL,
 	DocID		INT					NOT NULL,
-	CONSTRAINT	PK_SwitchID_SoneID
-	PRIMARY KEY	(SwitchID, SoneID),
+	CONSTRAINT	PK_SwitchID_ZoneID
+	PRIMARY KEY	(SwitchID, ZoneID),
 	CONSTRAINT	FK_Switches_SwitchID_PortConfig
 	FOREIGN KEY	(SwitchID)
 	REFERENCES	Assets.Switches,
-	CONSTRAINT	FK_Sone_SoneiD_PortConfig
-	FOREIGN KEY	(SoneID)
-	REFERENCES	Config.Sones,
+	CONSTRAINT	FK_Zone_ZoneiD_PortConfig
+	FOREIGN KEY	(ZoneID)
+	REFERENCES	Config.Zones,
 	CONSTRAINT	FK_ConfigJSON_DocID_PortConfig
 	FOREIGN KEY	(DocID)
 	REFERENCES	Config.ConfigJSON
@@ -165,16 +165,16 @@ CREATE TABLE Config.Room
     SwitchID	INT					NOT NULL,
 	RoomName	NVARCHAR(50)		NOT NULL UNIQUE,
 	PortRange	INT					NULL,
-	SoneID		INT					NULL,
+	ZoneID		INT					NULL,
 	VLAN		INT					NULL,
 	CONSTRAINT	PK_RoomID
 	PRIMARY KEY	(RoomID),
 	CONSTRAINT	FK_Switches_SwitchID_Room
 	FOREIGN KEY	(SwitchID)
 	REFERENCES	Assets.Switches,
-	CONSTRAINT	FK_Sone_SoneiD_Room
-	FOREIGN KEY	(SoneID)
-	REFERENCES	Config.Sones
+	CONSTRAINT	FK_Zone_ZoneiD_Room
+	FOREIGN KEY	(ZoneID)
+	REFERENCES	Config.Zones
 );
 GO
 
@@ -182,7 +182,7 @@ CREATE TABLE OrderDetails.Course
 (
 	CourseID			INT IDENTITY(1,1)	NOT NULL,
 	RoomID				INT					NOT NULL,
-	SoneID				INT					NULL, --Might be replaced to include Sone in text instead of ID, this is still under discussion.
+	ZoneID				INT					NULL, --Might be replaced to include Zone in text instead of ID, this is still under discussion.
 	CourseTitle			NVARCHAR(30)		NOT NULL,
 	CourseDescription	NVARCHAR(250)		NULL,
 	StartDate			DATETIME			NOT NULL,
@@ -194,9 +194,9 @@ CREATE TABLE OrderDetails.Course
 	CONSTRAINT			FK_Room_RoomID_Course
 	FOREIGN KEY			(RoomID)
 	REFERENCES			Config.Room,
-	CONSTRAINT			FK_Sone_SoneiD_Course
-	FOREIGN KEY			(SoneID)
-	REFERENCES			Config.Sones,
+	CONSTRAINT			FK_Zone_ZoneiD_Course
+	FOREIGN KEY			(ZoneID)
+	REFERENCES			Config.Zones,
 	CONSTRAINT			CK_Start_lt_End
 	CHECK				(StartDate < EndDate) --Check for StartDate is less than EndDate
 );
@@ -439,7 +439,7 @@ CREATE PROCEDURE Assets.AddSwitch_JSON(
 	@SwitchName NVARCHAR(12) = N'',
 	@ModelID	INT,
 	@Speed		INT,
-	@Sones		NVARCHAR(200),
+	@Zones		NVARCHAR(200),
 	@VLANS		NVARCHAR(200)
 )
 AS
@@ -448,8 +448,8 @@ BEGIN TRY
 	BEGIN TRANSACTION
 		IF NOT EXISTS (SELECT SwitchName FROM Assets.Switches WHERE SwitchName LIKE '%'+@SwitchName+'%')
 			BEGIN
-				INSERT INTO Assets.Switches_JSON(SwitchName, ModelID, PortSpeed, Sones, VLANS)
-				VALUES		(@SwitchName, @ModelID, @Speed, @Sones, @VLANS)
+				INSERT INTO Assets.Switches_JSON(SwitchName, ModelID, PortSpeed, Zones, VLANS)
+				VALUES		(@SwitchName, @ModelID, @Speed, @Zones, @VLANS)
 				COMMIT TRANSACTION;
 			END
 		ELSE
