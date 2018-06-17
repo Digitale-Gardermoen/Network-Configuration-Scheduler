@@ -1,9 +1,13 @@
-/*This script doesnt create the database in MSSQL it only creates the table objects.
-Create a Database first before tryin to run this script.*/
-USE ZoneController;
+SET XACT_ABORT ON
+IF NOT EXISTS	(
+					SELECT database_id
+					FROM [master].[sys].[databases] WHERE [name] = 'ZoneController'
+				)
+	CREATE DATABASE ZoneController;
 GO
 
-SET XACT_ABORT ON
+USE ZoneController;
+GO
 
 --Drop ErrorLogging
 IF OBJECT_ID('dbo.CatchErrors', 'U')		IS NOT NULL DROP TABLE dbo.CatchErrors
@@ -25,7 +29,7 @@ IF OBJECT_ID('Config.PortConfig', 'U')		IS NOT NULL DROP TABLE Config.PortConfig
 IF OBJECT_ID('Config.ConfigJSON', 'U')		IS NOT NULL DROP TABLE Config.ConfigJSON
 IF OBJECT_ID('Config.VLANs', 'U')			IS NOT NULL DROP TABLE Config.VLANs
 IF OBJECT_ID('Config.Zones', 'U')			IS NOT NULL DROP TABLE Config.Zones
-IF OBJECT_ID('Assets.Switches_JSON', 'U')		IS NOT NULL DROP TABLE Assets.Switches_JSON
+IF OBJECT_ID('Assets.Switches_JSON', 'U')	IS NOT NULL DROP TABLE Assets.Switches_JSON
 IF OBJECT_ID('Assets.Switches', 'U')		IS NOT NULL DROP TABLE Assets.Switches
 IF OBJECT_ID('Assets.Models', 'U')			IS NOT NULL DROP TABLE Assets.Models
 
@@ -257,6 +261,7 @@ CREATE PROCEDURE Assets.AddModel(
 AS
 BEGIN TRY
 	SET XACT_ABORT ON;
+	SET NOCOUNT ON;
 	BEGIN TRANSACTION
 		IF NOT EXISTS (SELECT SwitchModel FROM Assets.Models WHERE SwitchModel LIKE '%'+@ModelName+'%')
 			BEGIN
@@ -274,6 +279,7 @@ BEGIN TRY
 			ROLLBACK TRANSACTION;
 		END
 	SET XACT_ABORT OFF;
+	SET NOCOUNT OFF;
 END TRY
 BEGIN CATCH
 	EXEC dbo.ErrorLogging;
@@ -295,6 +301,7 @@ CREATE PROCEDURE Assets.RemoveModel(
 AS
 BEGIN TRY
 	SET XACT_ABORT ON;
+	SET NOCOUNT ON;
 	BEGIN TRANSACTION
 		IF @ModelID IS NULL
 			BEGIN
@@ -313,6 +320,7 @@ BEGIN TRY
 			ROLLBACK TRANSACTION;
 		END
 	SET XACT_ABORT OFF;
+	SET NOCOUNT OFF;
 END TRY
 BEGIN CATCH
 	EXEC dbo.ErrorLogging;
@@ -334,6 +342,7 @@ CREATE PROCEDURE Assets.UpdateModel(
 AS
 BEGIN TRY
 	SET XACT_ABORT ON;
+	SET NOCOUNT ON;
 	BEGIN TRANSACTION
 		IF @ModelID IS NULL
 			BEGIN
@@ -352,6 +361,7 @@ BEGIN TRY
 			ROLLBACK TRANSACTION;
 		END
 	SET XACT_ABORT OFF;
+	SET NOCOUNT OFF;
 END TRY
 BEGIN CATCH
 	EXEC dbo.ErrorLogging;
@@ -371,6 +381,7 @@ CREATE PROCEDURE Assets.GetModels(
 )
 AS
 BEGIN TRY
+	SET NOCOUNT ON;
 	IF @ModelName IS NULL
 		BEGIN
 			SELECT	SwitchModel
@@ -382,6 +393,7 @@ BEGIN TRY
 			FROM	Assets.Models
 			WHERE	SwitchModel LIKE '%'+@ModelName+'%' --Might have to change this depending on what we want to filter, this will scan the table.
 		END
+	SET NOCOUNT OFF;
 END TRY
 BEGIN CATCH
 	EXEC dbo.ErrorLogging
@@ -404,6 +416,7 @@ CREATE PROCEDURE Assets.AddSwitch(
 AS
 BEGIN TRY
 	SET XACT_ABORT ON;
+	SET NOCOUNT ON;
 	BEGIN TRANSACTION
 		IF NOT EXISTS (SELECT SwitchName FROM Assets.Switches WHERE SwitchName LIKE '%'+@SwitchName+'%')
 			BEGIN
@@ -421,6 +434,7 @@ BEGIN TRY
 			ROLLBACK TRANSACTION;
 		END
 	SET XACT_ABORT OFF;
+	SET NOCOUNT OFF;
 END TRY
 BEGIN CATCH
 	EXEC dbo.ErrorLogging;
@@ -445,6 +459,7 @@ CREATE PROCEDURE Assets.AddSwitch_JSON(
 AS
 BEGIN TRY
 	SET XACT_ABORT ON;
+	SET NOCOUNT ON;
 	BEGIN TRANSACTION
 		IF NOT EXISTS (SELECT SwitchName FROM Assets.Switches WHERE SwitchName LIKE '%'+@SwitchName+'%')
 			BEGIN
@@ -462,6 +477,7 @@ BEGIN TRY
 			ROLLBACK TRANSACTION;
 		END
 	SET XACT_ABORT OFF;
+	SET NOCOUNT OFF;
 END TRY
 BEGIN CATCH
 	EXEC dbo.ErrorLogging;
