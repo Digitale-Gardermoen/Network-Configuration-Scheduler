@@ -239,7 +239,7 @@ GO
 
 CREATE PROCEDURE dbo.ErrorLogging
 AS
-	INSERT INTO dbo.CatchErrors
+	INSERT INTO dbo.CatchErrors(ErrorDate, ErrorNumber, ErrorMsg, ErrorSeverity, ErrorState, ErrorLine, ErrorProcedure, ErrorXACTSTATE)
 	VALUES		(
 					GETDATE(),
 					ERROR_NUMBER(),
@@ -250,7 +250,6 @@ AS
 					ERROR_PROCEDURE(),
 					XACT_STATE()
 				);
-	PRINT 'Error was logged with ID: ' + @@IDENTITY
 GO
 
 --Create stored procedures for CRUD handling.
@@ -271,8 +270,8 @@ BEGIN TRY
 			END
 		ELSE
 			BEGIN
-				PRINT 'Model('+@ModelName+') already exists.'
 				ROLLBACK TRANSACTION;
+				THROW 60000, 'ModelName already exists', 1;
 			END
 	IF @@TRANCOUNT <> 0
 		BEGIN
@@ -306,7 +305,7 @@ BEGIN TRY
 		IF @ModelID IS NULL
 			BEGIN
 				ROLLBACK TRANSACTION;
-				PRINT 'MODEL ID IS ZERO'
+				THROW 61000, 'ModelID cannot be zero(0)', 1;
 			END
 		ELSE
 			BEGIN
@@ -347,7 +346,7 @@ BEGIN TRY
 		IF @ModelID IS NULL
 			BEGIN
 				ROLLBACK TRANSACTION;
-				PRINT 'MODEL ID IS ZERO'
+				THROW 61000, 'ModelID cannot be zero(0)', 1;
 			END
 		ELSE
 			BEGIN
@@ -426,8 +425,8 @@ BEGIN TRY
 			END
 		ELSE
 			BEGIN
-				PRINT 'Switch('+@SwitchName+') already exists.'
 				ROLLBACK TRANSACTION;
+				THROW 60000, 'SwitchName already exists', 1;
 			END
 	IF @@TRANCOUNT <> 0
 		BEGIN
@@ -469,8 +468,8 @@ BEGIN TRY
 			END
 		ELSE
 			BEGIN
-				PRINT 'Switch('+@SwitchName+') already exists.'
 				ROLLBACK TRANSACTION;
+				THROW 60000, 'SwitchName already exists', 1;
 			END
 	IF @@TRANCOUNT <> 0
 		BEGIN
