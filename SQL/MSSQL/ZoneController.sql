@@ -70,8 +70,8 @@ GO
 
 CREATE TABLE Assets.Switches
 (
-    SwitchID	INT	IDENTITY(1,1)	NOT NULL,
-    SwitchName	NVARCHAR(12)		NOT NULL,
+	SwitchID	INT	IDENTITY(1,1)	NOT NULL,
+	SwitchName	NVARCHAR(12)		NOT NULL,
 	ModelID		INT					NOT NULL,
 	PortSpeed	INT					NOT NULL,
 	CONSTRAINT	PK_SwitchID
@@ -86,8 +86,8 @@ GO
 
 CREATE TABLE Assets.Switches_JSON
 (
-    SwitchID	INT	IDENTITY(1,1)	NOT NULL,
-    SwitchName	NVARCHAR(12)		NOT NULL,
+	SwitchID	INT	IDENTITY(1,1)	NOT NULL,
+	SwitchName	NVARCHAR(12)		NOT NULL,
 	ModelID		INT					NOT NULL,
 	PortSpeed	INT					NOT NULL,
 	Zones		NVARCHAR(200)		NOT NULL,--JSON
@@ -146,8 +146,8 @@ GO
 
 CREATE TABLE Config.PortConfig
 (
-    SwitchID	INT	IDENTITY(1,1)	NOT NULL,
-    ZoneID		INT					NOT NULL,
+	SwitchID	INT	IDENTITY(1,1)	NOT NULL,
+	ZoneID		INT					NOT NULL,
 	DocID		INT					NOT NULL,
 	CONSTRAINT	PK_SwitchID_ZoneID
 	PRIMARY KEY	(SwitchID, ZoneID),
@@ -165,8 +165,8 @@ GO
 
 CREATE TABLE Config.Room
 (
-    RoomID		INT	IDENTITY(1,1)	NOT NULL,
-    SwitchID	INT					NOT NULL,
+	RoomID		INT	IDENTITY(1,1)	NOT NULL,
+	SwitchID	INT					NOT NULL,
 	RoomName	NVARCHAR(50)		NOT NULL UNIQUE,
 	PortRange	INT					NULL,
 	ZoneID		INT					NULL,
