@@ -14,6 +14,7 @@ IF OBJECT_ID('dbo.CatchErrors', 'U')		IS NOT NULL DROP TABLE dbo.CatchErrors
 IF OBJECT_ID('dbo.ErrorLogging', 'P')		IS NOT NULL DROP PROCEDURE dbo.ErrorLogging
 
 --Drop Procedures.
+IF OBJECT_ID('OrderDetails.GetCourses', 'P')IS NOT NULL DROP PROCEDURE OrderDetails.GetCourses
 IF OBJECT_ID('Assets.AddSwitch_JSON', 'P')	IS NOT NULL DROP PROCEDURE Assets.AddSwitch_JSON
 IF OBJECT_ID('Assets.AddSwitch', 'P')		IS NOT NULL DROP PROCEDURE Assets.AddSwitch
 IF OBJECT_ID('Assets.GetModels', 'P')		IS NOT NULL DROP PROCEDURE Assets.GetModels
@@ -23,8 +24,10 @@ IF OBJECT_ID('Assets.AddModel', 'P')		IS NOT NULL DROP PROCEDURE Assets.AddModel
 
 --Drops Tables.
 IF OBJECT_ID('OrderDetails.Orders', 'U')	IS NOT NULL DROP TABLE OrderDetails.Orders
-IF OBJECT_ID('OrderDetails.Course', 'U')	IS NOT NULL DROP TABLE OrderDetails.Course
-IF OBJECT_ID('Config.Room', 'U')			IS NOT NULL DROP TABLE Config.Room
+IF OBJECT_ID('OrderDetails.Courses', 'U')	IS NOT NULL DROP TABLE OrderDetails.Courses
+IF OBJECT_ID('Person.Users', 'U')			IS NOT NULL DROP TABLE Person.Users
+IF OBJECT_ID('Config.Rooms', 'U')			IS NOT NULL DROP TABLE Config.Rooms
+IF OBJECT_ID('dbo.Locations', 'U')			IS NOT NULL DROP TABLE dbo.Locations
 IF OBJECT_ID('Config.PortConfig', 'U')		IS NOT NULL DROP TABLE Config.PortConfig
 IF OBJECT_ID('Config.ConfigJSON', 'U')		IS NOT NULL DROP TABLE Config.ConfigJSON
 IF OBJECT_ID('Config.VLANs', 'U')			IS NOT NULL DROP TABLE Config.VLANs
@@ -40,6 +43,7 @@ IF OBJECT_ID('dbo.IDCounter', 'SO')			IS NOT NULL DROP SEQUENCE dbo.IDCounter;
 IF SCHEMA_ID('Assets')						IS NOT NULL DROP SCHEMA Assets;
 IF SCHEMA_ID('Config')						IS NOT NULL DROP SCHEMA Config;
 IF SCHEMA_ID('OrderDetails')				IS NOT NULL DROP SCHEMA OrderDetails;
+IF SCHEMA_ID('Person')						IS NOT NULL DROP SCHEMA Person;
 GO
 
 --Create all schemas
@@ -49,7 +53,8 @@ CREATE SCHEMA Config;
 GO
 CREATE SCHEMA OrderDetails;
 GO
-
+CREATE SCHEMA Person;
+GO
 --Sequence for counting IDs
 CREATE SEQUENCE dbo.IDCounter
 AS INT
@@ -117,7 +122,7 @@ CREATE TABLE Config.VLANs
 	VLANID		INT	NOT NULL,
 	SwitchID	INT	NOT NULL,
 	ZoneID		INT	NOT NULL,
-	CONSTRAINT	PK_VLANs
+	CONSTRAINT	PK_VLANID_SwitchID_ZoneID
 	PRIMARY KEY	(VLANID, SwitchID, ZoneID),
 	CONSTRAINT	FK_Switches_SwitchID_VLANs
 	FOREIGN KEY	(SwitchID)
@@ -163,7 +168,14 @@ CREATE TABLE Config.PortConfig
 );
 GO
 
-CREATE TABLE Config.Room
+CREATE TABLE dbo.Locations
+(
+	LocationID	INT	NOT NULL,
+
+);
+GO
+
+CREATE TABLE Config.Rooms
 (
 	RoomID		INT	IDENTITY(1,1)	NOT NULL,
 	SwitchID	INT					NOT NULL,
@@ -173,20 +185,32 @@ CREATE TABLE Config.Room
 	VLAN		INT					NULL,
 	CONSTRAINT	PK_RoomID
 	PRIMARY KEY	(RoomID),
-	CONSTRAINT	FK_Switches_SwitchID_Room
+	CONSTRAINT	FK_Switches_SwitchID_Rooms
 	FOREIGN KEY	(SwitchID)
 	REFERENCES	Assets.Switches,
-	CONSTRAINT	FK_Zone_ZoneiD_Room
+	CONSTRAINT	FK_Zone_ZoneiD_Rooms
 	FOREIGN KEY	(ZoneID)
 	REFERENCES	Config.Zones
 );
 GO
 
-CREATE TABLE OrderDetails.Course
+CREATE TABLE Person.Users
+(
+	UserID		INT	IDENTITY(1,1)	NOT NULL,
+	FirstName	NVARCHAR(50)		NULL,
+	LastName	NVARCHAR(50)		NULL,
+	LogonName	NVARCHAR(20)		NULL,
+	EMail		NVARCHAR(100)		NULL,
+	CONSTRAINT	PK_UserID
+	PRIMARY KEY	(UserID)
+);
+GO
+
+CREATE TABLE OrderDetails.Courses
 (
 	CourseID			INT IDENTITY(1,1)	NOT NULL,
 	RoomID				INT					NOT NULL,
-	ZoneID				INT					NULL, --Might be replaced to include Zone in text instead of ID, this is still under discussion.
+	ZoneID				INT					NULL,
 	CourseTitle			NVARCHAR(30)		NOT NULL,
 	CourseDescription	NVARCHAR(250)		NULL,
 	StartDate			DATETIME			NOT NULL,
@@ -195,10 +219,10 @@ CREATE TABLE OrderDetails.Course
 	CourseTrainer		NVARCHAR(30)		NULL,
 	CONSTRAINT			PK_CourseID
 	PRIMARY KEY			(CourseID),
-	CONSTRAINT			FK_Room_RoomID_Course
+	CONSTRAINT			FK_Rooms_RoomID_Courses
 	FOREIGN KEY			(RoomID)
-	REFERENCES			Config.Room,
-	CONSTRAINT			FK_Zone_ZoneiD_Course
+	REFERENCES			Config.Rooms,
+	CONSTRAINT			FK_Zone_ZoneiD_Courses
 	FOREIGN KEY			(ZoneID)
 	REFERENCES			Config.Zones,
 	CONSTRAINT			CK_Start_lt_End
@@ -214,9 +238,9 @@ CREATE TABLE OrderDetails.Orders
 	OrderDate	DATETIME			NOT NULL,
 	CONSTRAINT	PK_OrderID
 	PRIMARY KEY	(OrderID),
-	CONSTRAINT	FK_Course_CourseID_Orders
+	CONSTRAINT	FK_Courses_CourseID_Orders
 	FOREIGN KEY	(CourseID)
-	REFERENCES	OrderDetails.Course
+	REFERENCES	OrderDetails.Courses
 );
 GO
 
@@ -396,14 +420,6 @@ BEGIN TRY
 END TRY
 BEGIN CATCH
 	EXEC dbo.ErrorLogging
-	IF	XACT_STATE() = -1
-		BEGIN
-			ROLLBACK TRANSACTION;
-		END
-	IF	XACT_STATE() = 1
-		BEGIN
-			COMMIT TRANSACTION;
-		END
 END CATCH;
 GO
 
@@ -488,6 +504,33 @@ BEGIN CATCH
 		BEGIN
 			COMMIT TRANSACTION;
 		END
+END CATCH;
+GO
+
+CREATE PROCEDURE OrderDetails.GetCourses(
+	@CourseID	INT
+)
+AS
+BEGIN TRY
+	SET NOCOUNT ON;
+		SELECT	COR.CourseID,
+				ROO.RoomName,
+				ZON.ZoneName,
+				COR.CourseTitle,
+				COR.CourseDescription,
+				COR.StartDate,
+				COR.EndDate,
+				COR.Organizer,
+				COR.CourseTrainer
+		FROM	OrderDetails.Courses AS COR
+		JOIN	Config.Rooms AS ROO
+				ON	COR.RoomID = ROO.RoomID
+		JOIN	Config.Zones AS ZON
+				ON COR.ZoneID = ZON.ZoneID
+	SET NOCOUNT OFF;
+END TRY
+BEGIN CATCH
+	EXEC dbo.ErrorLogging
 END CATCH;
 GO
 
