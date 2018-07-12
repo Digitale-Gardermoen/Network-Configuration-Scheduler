@@ -23,11 +23,12 @@ IF OBJECT_ID('Assets.RemoveModel', 'P')		IS NOT NULL DROP PROCEDURE Assets.Remov
 IF OBJECT_ID('Assets.AddModel', 'P')		IS NOT NULL DROP PROCEDURE Assets.AddModel
 
 --Drops Tables.
+IF OBJECT_ID('Building.Locations', 'U')		IS NOT NULL DROP TABLE Building.Locations
+IF OBJECT_ID('Building.Addresses', 'U')		IS NOT NULL DROP TABLE Building.Addresses
 IF OBJECT_ID('OrderDetails.Orders', 'U')	IS NOT NULL DROP TABLE OrderDetails.Orders
 IF OBJECT_ID('OrderDetails.Courses', 'U')	IS NOT NULL DROP TABLE OrderDetails.Courses
 IF OBJECT_ID('Person.Users', 'U')			IS NOT NULL DROP TABLE Person.Users
 IF OBJECT_ID('Config.Rooms', 'U')			IS NOT NULL DROP TABLE Config.Rooms
-IF OBJECT_ID('dbo.Locations', 'U')			IS NOT NULL DROP TABLE dbo.Locations
 IF OBJECT_ID('Config.PortConfig', 'U')		IS NOT NULL DROP TABLE Config.PortConfig
 IF OBJECT_ID('Config.ConfigJSON', 'U')		IS NOT NULL DROP TABLE Config.ConfigJSON
 IF OBJECT_ID('Config.VLANs', 'U')			IS NOT NULL DROP TABLE Config.VLANs
@@ -44,6 +45,7 @@ IF SCHEMA_ID('Assets')						IS NOT NULL DROP SCHEMA Assets;
 IF SCHEMA_ID('Config')						IS NOT NULL DROP SCHEMA Config;
 IF SCHEMA_ID('OrderDetails')				IS NOT NULL DROP SCHEMA OrderDetails;
 IF SCHEMA_ID('Person')						IS NOT NULL DROP SCHEMA Person;
+IF SCHEMA_ID('Building')					IS NOT NULL DROP SCHEMA Building;
 GO
 
 --Create all schemas
@@ -55,6 +57,9 @@ CREATE SCHEMA OrderDetails;
 GO
 CREATE SCHEMA Person;
 GO
+CREATE SCHEMA Building;
+GO
+
 --Sequence for counting IDs
 CREATE SEQUENCE dbo.IDCounter
 AS INT
@@ -168,13 +173,6 @@ CREATE TABLE Config.PortConfig
 );
 GO
 
-CREATE TABLE dbo.Locations
-(
-	LocationID	INT	NOT NULL,
-
-);
-GO
-
 CREATE TABLE Config.Rooms
 (
 	RoomID		INT	IDENTITY(1,1)	NOT NULL,
@@ -215,7 +213,7 @@ CREATE TABLE OrderDetails.Courses
 	CourseDescription	NVARCHAR(250)		NULL,
 	StartDate			DATETIME			NOT NULL,
 	EndDate				DATETIME			NOT NULL,
-	Organizer			NVARCHAR(30)		NULL,
+	OrganizerID			INT					NULL,
 	CourseTrainer		NVARCHAR(30)		NULL,
 	CONSTRAINT			PK_CourseID
 	PRIMARY KEY			(CourseID),
@@ -225,6 +223,9 @@ CREATE TABLE OrderDetails.Courses
 	CONSTRAINT			FK_Zone_ZoneiD_Courses
 	FOREIGN KEY			(ZoneID)
 	REFERENCES			Config.Zones,
+	CONSTRAINT			FK_Users_OrganizerID_Courses
+	FOREIGN KEY			(OrganizerID)
+	REFERENCES			Person.Users,
 	CONSTRAINT			CK_Start_lt_End
 	CHECK				(StartDate < EndDate) --Check for StartDate is less than EndDate
 );
@@ -233,14 +234,56 @@ GO
 CREATE TABLE OrderDetails.Orders
 (
 	OrderID		INT	IDENTITY(1,1)	NOT NULL,
-	OrderBy		NVARCHAR(30)		NULL,
+	OrderBy		INT					NULL,
 	CourseID	INT					NOT NULL,
 	OrderDate	DATETIME			NOT NULL,
 	CONSTRAINT	PK_OrderID
 	PRIMARY KEY	(OrderID),
+	CONSTRAINT	FK_Users_OrderBy_Orders
+	FOREIGN KEY	(OrderBy)
+	REFERENCES	Person.Users,
 	CONSTRAINT	FK_Courses_CourseID_Orders
 	FOREIGN KEY	(CourseID)
 	REFERENCES	OrderDetails.Courses
+);
+GO
+
+CREATE TABLE Building.Addresses
+(
+	AddressID		INT	IDENTITY(1,1)	NOT NULL,
+	AddressLine		NVARCHAR(50)		NULL,
+	City			NVARCHAR(25)		NULL,
+	StateOrProvince	NVARCHAR(50)		NULL,
+	PostalCode		INT					NULL,
+	CONSTRAINT		PK_AddressID
+	PRIMARY KEY		(AddressID)
+	--AddressTypeID	INT					NOT NULL,
+	/*Hvis vi skal ha adresser andre steder enn lokasjon kan vi ta med dette og lage en ny tabell.
+	Tankegangen er som følger:
+	Si vi har 2 tabeller
+		Users
+		Locations
+	Begge tabellene skal inneholde en adresse.
+	Derfor vil typen adresse gjelde enten Users eller Locations
+	*/
+);
+GO
+
+CREATE TABLE Building.Locations
+(
+	LocationID		INT	IDENTITY(1,1)	NOT NULL,
+	LocationName	NVARCHAR(50)		NULL,
+	AddressID		INT					NULL,
+	ContactID		INT					NULL,
+	Code			NVARCHAR(6)			NULL,
+	CONSTRAINT		PK_LocationID
+	PRIMARY KEY		(LocationID),
+	CONSTRAINT		FK_Addresses_AddressID_Locations
+	FOREIGN KEY		(AddressID)
+	REFERENCES		Building.Addresses,
+	CONSTRAINT		FK_Users_ContactID_Locations
+	FOREIGN KEY		(ContactID)
+	REFERENCES		Person.Users
 );
 GO
 
@@ -520,13 +563,15 @@ BEGIN TRY
 				COR.CourseDescription,
 				COR.StartDate,
 				COR.EndDate,
-				COR.Organizer,
+				USR.UserID,
 				COR.CourseTrainer
 		FROM	OrderDetails.Courses AS COR
 		JOIN	Config.Rooms AS ROO
-				ON	COR.RoomID = ROO.RoomID
+				ON COR.RoomID = ROO.RoomID
 		JOIN	Config.Zones AS ZON
 				ON COR.ZoneID = ZON.ZoneID
+		JOIN	Person.Users AS USR
+				ON COR.OrganizerID = USR.UserID
 	SET NOCOUNT OFF;
 END TRY
 BEGIN CATCH
