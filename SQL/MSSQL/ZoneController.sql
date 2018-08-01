@@ -23,8 +23,8 @@ IF OBJECT_ID('Assets.RemoveModel', 'P')		IS NOT NULL DROP PROCEDURE Assets.Remov
 IF OBJECT_ID('Assets.AddModel', 'P')		IS NOT NULL DROP PROCEDURE Assets.AddModel
 
 --Drops Tables.
-IF OBJECT_ID('Building.Locations', 'U')		IS NOT NULL DROP TABLE Building.Locations
-IF OBJECT_ID('Building.Addresses', 'U')		IS NOT NULL DROP TABLE Building.Addresses
+IF OBJECT_ID('Offices.Locations', 'U')		IS NOT NULL DROP TABLE Offices.Locations
+IF OBJECT_ID('Offices.Addresses', 'U')		IS NOT NULL DROP TABLE Offices.Addresses
 IF OBJECT_ID('OrderDetails.Orders', 'U')	IS NOT NULL DROP TABLE OrderDetails.Orders
 IF OBJECT_ID('OrderDetails.Courses', 'U')	IS NOT NULL DROP TABLE OrderDetails.Courses
 IF OBJECT_ID('Person.Users', 'U')			IS NOT NULL DROP TABLE Person.Users
@@ -45,7 +45,7 @@ IF SCHEMA_ID('Assets')						IS NOT NULL DROP SCHEMA Assets;
 IF SCHEMA_ID('Config')						IS NOT NULL DROP SCHEMA Config;
 IF SCHEMA_ID('OrderDetails')				IS NOT NULL DROP SCHEMA OrderDetails;
 IF SCHEMA_ID('Person')						IS NOT NULL DROP SCHEMA Person;
-IF SCHEMA_ID('Building')					IS NOT NULL DROP SCHEMA Building;
+IF SCHEMA_ID('Offices')					IS NOT NULL DROP SCHEMA Offices;
 GO
 
 --Create all schemas
@@ -57,7 +57,7 @@ CREATE SCHEMA OrderDetails;
 GO
 CREATE SCHEMA Person;
 GO
-CREATE SCHEMA Building;
+CREATE SCHEMA Offices;
 GO
 
 --Sequence for counting IDs
@@ -248,7 +248,7 @@ CREATE TABLE OrderDetails.Orders
 );
 GO
 
-CREATE TABLE Building.Addresses
+CREATE TABLE Offices.Addresses
 (
 	AddressID		INT	IDENTITY(1,1)	NOT NULL,
 	AddressLine		NVARCHAR(50)		NULL,
@@ -269,7 +269,7 @@ CREATE TABLE Building.Addresses
 );
 GO
 
-CREATE TABLE Building.Locations
+CREATE TABLE Offices.Locations
 (
 	LocationID		INT	IDENTITY(1,1)	NOT NULL,
 	LocationName	NVARCHAR(50)		NULL,
@@ -280,7 +280,7 @@ CREATE TABLE Building.Locations
 	PRIMARY KEY		(LocationID),
 	CONSTRAINT		FK_Addresses_AddressID_Locations
 	FOREIGN KEY		(AddressID)
-	REFERENCES		Building.Addresses,
+	REFERENCES		Offices.Addresses,
 	CONSTRAINT		FK_Users_ContactID_Locations
 	FOREIGN KEY		(ContactID)
 	REFERENCES		Person.Users
