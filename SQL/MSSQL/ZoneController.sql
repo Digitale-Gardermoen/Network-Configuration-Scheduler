@@ -12,6 +12,7 @@ GO
 --Drop ErrorLogging
 IF OBJECT_ID('dbo.CatchErrors', 'U')		IS NOT NULL DROP TABLE dbo.CatchErrors
 IF OBJECT_ID('dbo.ErrorLogging', 'P')		IS NOT NULL DROP PROCEDURE dbo.ErrorLogging
+IF OBJECT_ID('dbo.ErrorHandling', 'P')		IS NOT NULL DROP PROCEDURE dbo.ErrorHandling
 
 --Drop Procedures.
 IF OBJECT_ID('OrderDetails.GetCourses', 'P')IS NOT NULL DROP PROCEDURE OrderDetails.GetCourses
@@ -46,7 +47,7 @@ IF SCHEMA_ID('Assets')						IS NOT NULL DROP SCHEMA Assets;
 IF SCHEMA_ID('Config')						IS NOT NULL DROP SCHEMA Config;
 IF SCHEMA_ID('OrderDetails')				IS NOT NULL DROP SCHEMA OrderDetails;
 IF SCHEMA_ID('Person')						IS NOT NULL DROP SCHEMA Person;
-IF SCHEMA_ID('Offices')					IS NOT NULL DROP SCHEMA Offices;
+IF SCHEMA_ID('Offices')						IS NOT NULL DROP SCHEMA Offices;
 GO
 
 --Create all schemas
@@ -320,10 +321,27 @@ AS
 				);
 GO
 
+CREATE PROCEDURE dbo.ErrorHandling
+AS
+	EXEC dbo.ErrorLogging;			--Execute ErrorLogging, so we can log the error that triggered the catch block.
+	IF @@TRANCOUNT <> 0				--Check transaction count, if there is a uncommited transaction do a ROLLBACK.
+		BEGIN
+			ROLLBACK TRANSACTION;
+		END
+	IF	XACT_STATE() = -1			--Check XACT_STATE in the case of uncommitable transactions -1 means the transaction is uncommitable.
+		BEGIN
+			ROLLBACK TRANSACTION;
+		END
+	IF	XACT_STATE() = 1			--Check XACT_STATE in the case of uncommitable transactions 1 means the transaction is commitable.
+		BEGIN
+			COMMIT TRANSACTION;
+		END
+GO
+
 --Create stored procedures for CRUD handling.
 --Assets.Models stored procs:
 CREATE PROCEDURE Assets.AddModel(
-	@ModelName	NVARCHAR(20)
+	@ModelName	NVARCHAR(20)		--Modelname that should be added.
 )
 AS
 BEGIN TRY
@@ -335,7 +353,7 @@ BEGIN TRY
 				INSERT INTO Assets.Models(SwitchModel)
 				VALUES		(@ModelName)
 				COMMIT TRANSACTION;
-				RETURN 0;
+				RETURN 1;
 			END
 		ELSE
 			BEGIN
@@ -344,67 +362,46 @@ BEGIN TRY
 			END
 END TRY
 BEGIN CATCH
-	IF @@TRANCOUNT <> 0
-		BEGIN
-			ROLLBACK TRANSACTION;
-		END
-	EXEC dbo.ErrorLogging;
-	IF	XACT_STATE() = -1
-		BEGIN
-			ROLLBACK TRANSACTION;
-		END
-	IF	XACT_STATE() = 1
-		BEGIN
-			COMMIT TRANSACTION;
-		END
-	RETURN -1;
+	EXEC dbo.ErrorHandling;
+	RETURN 0;					--Return False to the application, so we can report the error to the user.
 END CATCH;
 GO
 
 CREATE PROCEDURE Assets.RemoveModel(
-	@ModelID	INT,
-	@ModelName	NVARCHAR(20) OUTPUT
+	@ModelID	INT
 )
 AS
 BEGIN TRY
 	SET XACT_ABORT ON;
 	SET NOCOUNT ON;
 	BEGIN TRANSACTION
-		IF (@ModelID IS NULL) OR NOT EXISTS (SELECT ModelID FROM Assets.Models WHERE ModelID = @ModelID) -- Move not exist to its own IF. It is not explanatory enough.
+		IF (@ModelID IS NULL)
 			BEGIN
 				ROLLBACK TRANSACTION;
 				THROW 61000, 'ModelID cannot be NULL', 1;
 			END
+		IF NOT EXISTS (SELECT ModelID FROM Assets.Models WHERE ModelID = @ModelID)
+			BEGIN
+				ROLLBACK TRANSACTION;
+				THROW 61001, 'ModelID does not exist', 1;
+			END
 		ELSE
 			BEGIN
 				DELETE FROM Assets.Models
-				OUTPUT		deleted.SwitchModel
 				WHERE		ModelID = @ModelID
 				COMMIT TRANSACTION;
-				RETURN 0;
+				RETURN 1;
 			END
 END TRY
 BEGIN CATCH
-	IF @@TRANCOUNT <> 0
-		BEGIN
-			ROLLBACK TRANSACTION;
-		END
-	EXEC dbo.ErrorLogging;
-	IF	XACT_STATE() = -1
-		BEGIN
-			ROLLBACK TRANSACTION;
-		END
-	IF	XACT_STATE() = 1
-		BEGIN
-			COMMIT TRANSACTION;
-		END
-	RETURN -1;
+	EXEC dbo.ErrorHandling;
+	RETURN 0;					--Return False to the application, so we can report the error to the user.
 END CATCH;
 GO
 
 CREATE PROCEDURE Assets.UpdateModel(
-	@ModelID	INT,
-	@ModelName	NVARCHAR(20)
+	@ModelID	INT,			-- ModelID from application, get the select modelid first.
+	@ModelName	NVARCHAR(20)	-- What the modelname should be changed to.
 )
 AS
 BEGIN TRY
@@ -422,24 +419,12 @@ BEGIN TRY
 				SET		SwitchModel = @ModelName
 				WHERE	ModelID = @ModelID
 				COMMIT TRANSACTION;
-				RETURN 0;
+				RETURN 1;
 			END
 END TRY
 BEGIN CATCH
-	IF @@TRANCOUNT <> 0
-		BEGIN
-			ROLLBACK TRANSACTION;
-		END
-	EXEC dbo.ErrorLogging;
-	IF	XACT_STATE() = -1
-		BEGIN
-			ROLLBACK TRANSACTION;
-		END
-	IF	XACT_STATE() = 1
-		BEGIN
-			COMMIT TRANSACTION;
-		END
-	RETURN -1;
+	EXEC dbo.ErrorHandling;
+	RETURN 0;					--Return False to the application, so we can report the error to the user.
 END CATCH;
 GO
 
@@ -464,7 +449,7 @@ BEGIN TRY
 END TRY
 BEGIN CATCH
 	EXEC dbo.ErrorLogging
-	RETURN -1;
+	RETURN 0;
 END CATCH;
 GO
 
@@ -483,7 +468,7 @@ BEGIN TRY
 				INSERT INTO Assets.Switches(SwitchName, ModelID, PortSpeed)
 				VALUES		(@SwitchName, @ModelID, @Speed)
 				COMMIT TRANSACTION;
-				RETURN 0;
+				RETURN 1;
 			END
 		ELSE
 			BEGIN
@@ -492,20 +477,8 @@ BEGIN TRY
 			END
 END TRY
 BEGIN CATCH
-	IF @@TRANCOUNT <> 0
-		BEGIN
-			ROLLBACK TRANSACTION;
-		END
-	EXEC dbo.ErrorLogging;
-	IF	XACT_STATE() = -1
-		BEGIN
-			ROLLBACK TRANSACTION;
-		END
-	IF	XACT_STATE() = 1
-		BEGIN
-			COMMIT TRANSACTION;
-		END
-	RETURN -1;
+	EXEC dbo.ErrorHandling;
+	RETURN 0;					--Return False to the application, so we can report the error to the user.
 END CATCH;
 GO
 
@@ -526,7 +499,7 @@ BEGIN TRY
 				INSERT INTO Assets.Switches_JSON(SwitchName, ModelID, PortSpeed, Zones, VLANS)
 				VALUES		(@SwitchName, @ModelID, @Speed, @Zones, @VLANS)
 				COMMIT TRANSACTION;
-				RETURN 0;
+				RETURN 1;
 			END
 		ELSE
 			BEGIN
@@ -535,26 +508,13 @@ BEGIN TRY
 			END
 END TRY
 BEGIN CATCH
-	IF @@TRANCOUNT <> 0
-		BEGIN
-			ROLLBACK TRANSACTION;
-		END
-	EXEC dbo.ErrorLogging;
-	IF	XACT_STATE() = -1
-		BEGIN
-			ROLLBACK TRANSACTION;
-		END
-	IF	XACT_STATE() = 1
-		BEGIN
-			COMMIT TRANSACTION;
-		END
-	RETURN -1;
+	EXEC dbo.ErrorHandling;
+	RETURN 0;					--Return False to the application, so we can report the error to the user.
 END CATCH;
 GO
 
 CREATE PROCEDURE Assets.RemoveSwitch(
-	@SwitchID	INT,
-	@SwitchName	NVARCHAR(20) OUTPUT
+	@SwitchID	INT
 )
 AS
 BEGIN TRY
@@ -569,27 +529,14 @@ BEGIN TRY
 		ELSE
 			BEGIN
 				DELETE FROM Assets.Switches
-				OUTPUT		deleted.SwitchName
 				WHERE		SwitchID = @SwitchID
 				COMMIT TRANSACTION;
-				RETURN 0;
+				RETURN 1;
 			END
 END TRY
 BEGIN CATCH
-	IF @@TRANCOUNT <> 0
-		BEGIN
-			ROLLBACK TRANSACTION;
-		END
-	EXEC dbo.ErrorLogging;
-	IF	XACT_STATE() = -1
-		BEGIN
-			ROLLBACK TRANSACTION;
-		END
-	IF	XACT_STATE() = 1
-		BEGIN
-			COMMIT TRANSACTION;
-		END
-	RETURN -1;
+	EXEC dbo.ErrorHandling;
+	RETURN 0;					--Return False to the application, so we can report the error to the user.
 END CATCH;
 GO
 
@@ -619,7 +566,7 @@ BEGIN TRY
 END TRY
 BEGIN CATCH
 	EXEC dbo.ErrorLogging
-	RETURN -1;
+	RETURN 0;
 END CATCH;
 GO
 
