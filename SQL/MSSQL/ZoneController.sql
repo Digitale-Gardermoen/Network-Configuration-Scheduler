@@ -83,9 +83,10 @@ GO
 CREATE TABLE Assets.Switches
 (
 	SwitchID	INT	IDENTITY(1,1)	NOT NULL,
-	SwitchName	NVARCHAR(12)		NOT NULL,
+	SwitchName	NVARCHAR(30)		NOT NULL,
 	ModelID		INT					NOT NULL,
 	PortSpeed	INT					NOT NULL,
+	PortRange	INT					NOT NULL,
 	CONSTRAINT	PK_SwitchID
 	PRIMARY KEY	(SwitchID),
 	CONSTRAINT	FK_Models_ModelID_Switches
@@ -99,9 +100,10 @@ GO
 CREATE TABLE Assets.Switches_JSON
 (
 	SwitchID	INT	IDENTITY(1,1)	NOT NULL,
-	SwitchName	NVARCHAR(12)		NOT NULL,
+	SwitchName	NVARCHAR(30)		NOT NULL,
 	ModelID		INT					NOT NULL,
 	PortSpeed	INT					NOT NULL,
+	PortRange	INT					NOT NULL,
 	Zones		NVARCHAR(200)		NOT NULL,--JSON
 	VLANS		NVARCHAR(200)		NOT NULL,--JSON
 	CONSTRAINT	PK_SwitchID_JSON
@@ -117,7 +119,7 @@ GO
 CREATE TABLE Config.Zones
 (
 	ZoneID		INT	IDENTITY(1,1)	NOT NULL,
-	ZoneName	NVARCHAR(9)			NOT NULL,
+	ZoneName	NVARCHAR(20)		NOT NULL,
 	CONSTRAINT	PK_ZoneID
 	PRIMARY KEY	(ZoneID)
 	--This table might be removed if we are converting to a JSON format on the Swtiches table.
@@ -141,56 +143,55 @@ CREATE TABLE Config.VLANs
 );
 GO
 
-CREATE TABLE Config.ConfigJSON--Might be replaced by textfiles with config code.
-(
-	DocID	INT	IDENTITY	NOT NULL,
-	JSONDoc	NVARCHAR(4000)	NULL,
-	CONSTRAINT	PK_DocID
-	PRIMARY KEY	(DocID),
-	CONSTRAINT	CK_IFJSON_TRUE
-	CHECK		(ISJSON(JSONDoc) = 1) --Check if the inserted data is properly formated JSON.
-	--If we need an index for our documents we can generate one here, check links:
-	--Small tables: https://docs.microsoft.com/en-us/sql/relational-databases/json/store-json-documents-in-sql-tables?view=sql-server-2017#indexes
-	--Large tables: https://docs.microsoft.com/en-us/sql/relational-databases/json/store-json-documents-in-sql-tables?view=sql-server-2017#large-tables--columnstore-format
-	--Frequently changing documents: https://docs.microsoft.com/en-us/sql/relational-databases/json/store-json-documents-in-sql-tables?view=sql-server-2017#frequently-changing-documents--memory-optimized-tables
-);
-GO
+--Currently deprecated, not used at the moment.
+--CREATE TABLE Config.ConfigJSON--Might be replaced by textfiles with config code.
+--(
+--	DocID	INT	IDENTITY	NOT NULL,
+--	JSONDoc	NVARCHAR(4000)	NULL,
+--	CONSTRAINT	PK_DocID
+--	PRIMARY KEY	(DocID),
+--	CONSTRAINT	CK_IFJSON_TRUE
+--	CHECK		(ISJSON(JSONDoc) = 1) --Check if the inserted data is properly formated JSON.
+--	--If we need an index for our documents we can generate one here, check links:
+--	--Small tables: https://docs.microsoft.com/en-us/sql/relational-databases/json/store-json-documents-in-sql-tables?view=sql-server-2017#indexes
+--	--Large tables: https://docs.microsoft.com/en-us/sql/relational-databases/json/store-json-documents-in-sql-tables?view=sql-server-2017#large-tables--columnstore-format
+--	--Frequently changing documents: https://docs.microsoft.com/en-us/sql/relational-databases/json/store-json-documents-in-sql-tables?view=sql-server-2017#frequently-changing-documents--memory-optimized-tables
+--);
+--GO
 
-CREATE TABLE Config.PortConfig
-(
-	SwitchID	INT	IDENTITY(1,1)	NOT NULL,
-	ZoneID		INT					NOT NULL,
-	DocID		INT					NOT NULL,
-	CONSTRAINT	PK_SwitchID_ZoneID
-	PRIMARY KEY	(SwitchID, ZoneID),
-	CONSTRAINT	FK_Switches_SwitchID_PortConfig
-	FOREIGN KEY	(SwitchID)
-	REFERENCES	Assets.Switches,
-	CONSTRAINT	FK_Zone_ZoneiD_PortConfig
-	FOREIGN KEY	(ZoneID)
-	REFERENCES	Config.Zones,
-	CONSTRAINT	FK_ConfigJSON_DocID_PortConfig
-	FOREIGN KEY	(DocID)
-	REFERENCES	Config.ConfigJSON
-);
-GO
+--Currently deprecated, not used at the moment.
+--CREATE TABLE Config.PortConfig
+--(
+--	SwitchID	INT	IDENTITY(1,1)	NOT NULL,
+--	ZoneID		INT					NOT NULL,
+--	DocID		INT					NOT NULL,
+--	CONSTRAINT	PK_SwitchID_ZoneID
+--	PRIMARY KEY	(SwitchID, ZoneID),
+--	CONSTRAINT	FK_Switches_SwitchID_PortConfig
+--	FOREIGN KEY	(SwitchID)
+--	REFERENCES	Assets.Switches,
+--	CONSTRAINT	FK_Zone_ZoneiD_PortConfig
+--	FOREIGN KEY	(ZoneID)
+--	REFERENCES	Config.Zones,
+--	CONSTRAINT	FK_ConfigJSON_DocID_PortConfig
+--	FOREIGN KEY	(DocID)
+--	REFERENCES	Config.ConfigJSON
+--);
+--GO
 
 CREATE TABLE Config.Rooms
 (
 	RoomID		INT	IDENTITY(1,1)	NOT NULL,
 	SwitchID	INT					NOT NULL,
-	RoomName	NVARCHAR(50)		NOT NULL UNIQUE,
-	PortRange	INT					NULL,
-	ZoneID		INT					NULL,
+	RoomName	NVARCHAR(50)		NOT NULL,
 	VLAN		INT					NULL,
 	CONSTRAINT	PK_RoomID
 	PRIMARY KEY	(RoomID),
 	CONSTRAINT	FK_Switches_SwitchID_Rooms
 	FOREIGN KEY	(SwitchID)
 	REFERENCES	Assets.Switches,
-	CONSTRAINT	FK_Zone_ZoneiD_Rooms
-	FOREIGN KEY	(ZoneID)
-	REFERENCES	Config.Zones
+	CONSTRAINT	UQ_RoomName
+	UNIQUE		(RoomName)
 );
 GO
 
