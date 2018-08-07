@@ -9,45 +9,55 @@ GO
 USE ZoneController;
 GO
 
+-------------------------------------------------------------------------
 --Drop ErrorLogging
-IF OBJECT_ID('dbo.CatchErrors', 'U')		IS NOT NULL DROP TABLE dbo.CatchErrors
-IF OBJECT_ID('dbo.ErrorLogging', 'P')		IS NOT NULL DROP PROCEDURE dbo.ErrorLogging
-IF OBJECT_ID('dbo.ErrorHandling', 'P')		IS NOT NULL DROP PROCEDURE dbo.ErrorHandling
-
+-------------------------------------------------------------------------
+IF OBJECT_ID('Auditing.CatchErrors', 'U')	IS NOT NULL DROP TABLE Auditing.CatchErrors;
+IF OBJECT_ID('Auditing.ErrorLogging', 'P')	IS NOT NULL DROP PROCEDURE Auditing.ErrorLogging;
+IF OBJECT_ID('Auditing.ErrorHandling', 'P')	IS NOT NULL DROP PROCEDURE Auditing.ErrorHandling;
+-------------------------------------------------------------------------
 --Drop Procedures.
-IF OBJECT_ID('OrderDetails.GetCourses', 'P')IS NOT NULL DROP PROCEDURE OrderDetails.GetCourses
-IF OBJECT_ID('Assets.RemoveSwitch', 'P')	IS NOT NULL DROP PROCEDURE Assets.RemoveSwitch
-IF OBJECT_ID('Assets.AddSwitch_JSON', 'P')	IS NOT NULL DROP PROCEDURE Assets.AddSwitch_JSON
-IF OBJECT_ID('Assets.AddSwitch', 'P')		IS NOT NULL DROP PROCEDURE Assets.AddSwitch
-IF OBJECT_ID('Assets.GetModels', 'P')		IS NOT NULL DROP PROCEDURE Assets.GetModels
-IF OBJECT_ID('Assets.UpdateModel', 'P')		IS NOT NULL DROP PROCEDURE Assets.UpdateModel
-IF OBJECT_ID('Assets.RemoveModel', 'P')		IS NOT NULL DROP PROCEDURE Assets.RemoveModel
-IF OBJECT_ID('Assets.AddModel', 'P')		IS NOT NULL DROP PROCEDURE Assets.AddModel
-
+-------------------------------------------------------------------------
+IF OBJECT_ID('OrderDetails.GetCourses', 'P')IS NOT NULL DROP PROCEDURE OrderDetails.GetCourses;
+IF OBJECT_ID('Assets.GetSwitches', 'P')		IS NOT NULL DROP PROCEDURE Assets.GetSwitches;
+IF OBJECT_ID('Assets.UpdateSwitch', 'P')	IS NOT NULL DROP PROCEDURE Assets.UpdateSwitch;
+IF OBJECT_ID('Assets.RemoveSwitch', 'P')	IS NOT NULL DROP PROCEDURE Assets.RemoveSwitch;
+IF OBJECT_ID('Assets.AddSwitch_JSON', 'P')	IS NOT NULL DROP PROCEDURE Assets.AddSwitch_JSON;	--Deprecated
+IF OBJECT_ID('Assets.AddSwitch', 'P')		IS NOT NULL DROP PROCEDURE Assets.AddSwitch;
+IF OBJECT_ID('Assets.GetModels', 'P')		IS NOT NULL DROP PROCEDURE Assets.GetModels;
+IF OBJECT_ID('Assets.UpdateModel', 'P')		IS NOT NULL DROP PROCEDURE Assets.UpdateModel;
+IF OBJECT_ID('Assets.RemoveModel', 'P')		IS NOT NULL DROP PROCEDURE Assets.RemoveModel;
+IF OBJECT_ID('Assets.AddModel', 'P')		IS NOT NULL DROP PROCEDURE Assets.AddModel;
+-------------------------------------------------------------------------
 --Drops Tables.
-IF OBJECT_ID('Offices.Locations', 'U')		IS NOT NULL DROP TABLE Offices.Locations
-IF OBJECT_ID('Offices.Addresses', 'U')		IS NOT NULL DROP TABLE Offices.Addresses
-IF OBJECT_ID('OrderDetails.Orders', 'U')	IS NOT NULL DROP TABLE OrderDetails.Orders
-IF OBJECT_ID('OrderDetails.Courses', 'U')	IS NOT NULL DROP TABLE OrderDetails.Courses
-IF OBJECT_ID('Person.Users', 'U')			IS NOT NULL DROP TABLE Person.Users
-IF OBJECT_ID('Config.Rooms', 'U')			IS NOT NULL DROP TABLE Config.Rooms
-IF OBJECT_ID('Config.PortConfig', 'U')		IS NOT NULL DROP TABLE Config.PortConfig
-IF OBJECT_ID('Config.ConfigJSON', 'U')		IS NOT NULL DROP TABLE Config.ConfigJSON
-IF OBJECT_ID('Config.VLANs', 'U')			IS NOT NULL DROP TABLE Config.VLANs
-IF OBJECT_ID('Config.Zones', 'U')			IS NOT NULL DROP TABLE Config.Zones
-IF OBJECT_ID('Assets.Switches_JSON', 'U')	IS NOT NULL DROP TABLE Assets.Switches_JSON
-IF OBJECT_ID('Assets.Switches', 'U')		IS NOT NULL DROP TABLE Assets.Switches
-IF OBJECT_ID('Assets.Models', 'U')			IS NOT NULL DROP TABLE Assets.Models
-
+-------------------------------------------------------------------------
+IF OBJECT_ID('Offices.Locations', 'U')		IS NOT NULL DROP TABLE Offices.Locations;
+IF OBJECT_ID('Offices.Addresses', 'U')		IS NOT NULL DROP TABLE Offices.Addresses;
+IF OBJECT_ID('OrderDetails.Orders', 'U')	IS NOT NULL DROP TABLE OrderDetails.Orders;
+IF OBJECT_ID('OrderDetails.Courses', 'U')	IS NOT NULL DROP TABLE OrderDetails.Courses;
+IF OBJECT_ID('Person.Users', 'U')			IS NOT NULL DROP TABLE Person.Users;
+IF OBJECT_ID('Config.Rooms', 'U')			IS NOT NULL DROP TABLE Config.Rooms;
+IF OBJECT_ID('Config.PortConfig', 'U')		IS NOT NULL DROP TABLE Config.PortConfig;			--Deprecated
+IF OBJECT_ID('Config.ConfigJSON', 'U')		IS NOT NULL DROP TABLE Config.ConfigJSON;			--Deprecated
+IF OBJECT_ID('Config.VLANs', 'U')			IS NOT NULL DROP TABLE Config.VLANs;
+IF OBJECT_ID('Config.Zones', 'U')			IS NOT NULL DROP TABLE Config.Zones;
+IF OBJECT_ID('Assets.Switches_JSON', 'U')	IS NOT NULL DROP TABLE Assets.Switches_JSON;		--Deprecated
+IF OBJECT_ID('Assets.Switches', 'U')		IS NOT NULL DROP TABLE Assets.Switches;
+IF OBJECT_ID('Assets.Models', 'U')			IS NOT NULL DROP TABLE Assets.Models;
+-------------------------------------------------------------------------
 --Drop Sequence
-IF OBJECT_ID('dbo.IDCounter', 'SO')			IS NOT NULL DROP SEQUENCE dbo.IDCounter;
-
+-------------------------------------------------------------------------
+IF OBJECT_ID('Auditing.IDCounter', 'SO')	IS NOT NULL DROP SEQUENCE Auditing.IDCounter;		--Deprecated
+-------------------------------------------------------------------------
 --Drop Schema if it exist.
+-------------------------------------------------------------------------
 IF SCHEMA_ID('Assets')						IS NOT NULL DROP SCHEMA Assets;
 IF SCHEMA_ID('Config')						IS NOT NULL DROP SCHEMA Config;
 IF SCHEMA_ID('OrderDetails')				IS NOT NULL DROP SCHEMA OrderDetails;
 IF SCHEMA_ID('Person')						IS NOT NULL DROP SCHEMA Person;
 IF SCHEMA_ID('Offices')						IS NOT NULL DROP SCHEMA Offices;
+IF SCHEMA_ID('Auditing')					IS NOT NULL DROP SCHEMA Auditing;
+-------------------------------------------------------------------------
 GO
 
 --Create all schemas
@@ -61,13 +71,16 @@ CREATE SCHEMA Person;
 GO
 CREATE SCHEMA Offices;
 GO
-
---Sequence for counting IDs
-CREATE SEQUENCE dbo.IDCounter
-AS INT
-START WITH 0
-INCREMENT BY 1;
+CREATE SCHEMA Auditing;
 GO
+
+--Currently deprecated, not used at the moment.
+--Sequence for counting IDs
+--CREATE SEQUENCE Auditing.IDCounter
+--AS INT
+--START WITH 0
+--INCREMENT BY 1;
+--GO
 
 --Create all tables
 --The order of the tables are important because the FK reference table needs to exist before adding a FK.
@@ -97,24 +110,25 @@ CREATE TABLE Assets.Switches
 );
 GO
 
-CREATE TABLE Assets.Switches_JSON
-(
-	SwitchID	INT	IDENTITY(1,1)	NOT NULL,
-	SwitchName	NVARCHAR(30)		NOT NULL,
-	ModelID		INT					NOT NULL,
-	PortSpeed	INT					NOT NULL,
-	PortRange	INT					NOT NULL,
-	Zones		NVARCHAR(200)		NOT NULL,--JSON
-	VLANS		NVARCHAR(200)		NOT NULL,--JSON
-	CONSTRAINT	PK_SwitchID_JSON
-	PRIMARY KEY	(SwitchID),
-	CONSTRAINT	FK_Models_ModelID_Switches_JSON
-	FOREIGN KEY	(ModelID)
-	REFERENCES	Assets.Models,
-	CONSTRAINT	UQ_SwitchName_JSON
-	UNIQUE		(SwitchName)
-);
-GO
+--Currently deprecated, not used at the moment.
+--CREATE TABLE Assets.Switches_JSON
+--(
+--	SwitchID	INT	IDENTITY(1,1)	NOT NULL,
+--	SwitchName	NVARCHAR(30)		NOT NULL,
+--	ModelID		INT					NOT NULL,
+--	PortSpeed	INT					NOT NULL,
+--	PortRange	INT					NOT NULL,
+--	Zones		NVARCHAR(200)		NOT NULL,--JSON
+--	VLANS		NVARCHAR(200)		NOT NULL,--JSON
+--	CONSTRAINT	PK_SwitchID_JSON
+--	PRIMARY KEY	(SwitchID),
+--	CONSTRAINT	FK_Models_ModelID_Switches_JSON
+--	FOREIGN KEY	(ModelID)
+--	REFERENCES	Assets.Models,
+--	CONSTRAINT	UQ_SwitchName_JSON
+--	UNIQUE		(SwitchName)
+--);
+--GO
 
 CREATE TABLE Config.Zones
 (
@@ -291,7 +305,7 @@ CREATE TABLE Offices.Locations
 GO
 
 --Create Error handling for stored procedures:
-CREATE TABLE dbo.CatchErrors
+CREATE TABLE Auditing.CatchErrors
 (
 	OccurrenceID	INT	IDENTITY(1,1)	NOT NULL,
 	ErrorDate		DATETIME			NULL,
@@ -307,9 +321,9 @@ CREATE TABLE dbo.CatchErrors
 );
 GO
 
-CREATE PROCEDURE dbo.ErrorLogging
+CREATE PROCEDURE Auditing.ErrorLogging
 AS
-	INSERT INTO dbo.CatchErrors(ErrorDate, ErrorNumber, ErrorMsg, ErrorSeverity, ErrorState, ErrorLine, ErrorProcedure, ErrorXACTSTATE)
+	INSERT INTO Auditing.CatchErrors(ErrorDate, ErrorNumber, ErrorMsg, ErrorSeverity, ErrorState, ErrorLine, ErrorProcedure, ErrorXACTSTATE)
 	VALUES		(
 					GETDATE(),
 					ERROR_NUMBER(),
@@ -322,9 +336,9 @@ AS
 				);
 GO
 
-CREATE PROCEDURE dbo.ErrorHandling
+CREATE PROCEDURE Auditing.ErrorHandling
 AS
-	EXEC dbo.ErrorLogging;			--Execute ErrorLogging, so we can log the error that triggered the catch block.
+	EXEC Auditing.ErrorLogging;			--Execute ErrorLogging, so we can log the error that triggered the catch block.
 	IF @@TRANCOUNT <> 0				--Check transaction count, if there is a uncommited transaction do a ROLLBACK.
 		BEGIN
 			ROLLBACK TRANSACTION;
@@ -363,7 +377,7 @@ BEGIN TRY
 			END
 END TRY
 BEGIN CATCH
-	EXEC dbo.ErrorHandling;
+	EXEC Auditing.ErrorHandling;
 	RETURN 0;					--Return False to the application, so we can report the error to the user.
 END CATCH;
 GO
@@ -381,7 +395,7 @@ BEGIN TRY
 				ROLLBACK TRANSACTION;
 				THROW 61000, 'ModelID cannot be NULL', 1;
 			END
-		IF NOT EXISTS (SELECT ModelID FROM Assets.Models WHERE ModelID = @ModelID)
+		IF NOT EXISTS (SELECT TOP 1 ModelID FROM Assets.Models WHERE ModelID = @ModelID)
 			BEGIN
 				ROLLBACK TRANSACTION;
 				THROW 61001, 'ModelID does not exist', 1;
@@ -395,7 +409,7 @@ BEGIN TRY
 			END
 END TRY
 BEGIN CATCH
-	EXEC dbo.ErrorHandling;
+	EXEC Auditing.ErrorHandling;
 	RETURN 0;					--Return False to the application, so we can report the error to the user.
 END CATCH;
 GO
@@ -409,10 +423,15 @@ BEGIN TRY
 	SET XACT_ABORT ON;
 	SET NOCOUNT ON;
 	BEGIN TRANSACTION
-		IF @ModelID IS NULL
+		IF (@ModelID IS NULL)
 			BEGIN
 				ROLLBACK TRANSACTION;
-				THROW 61000, 'ModelID cannot be zero(0)', 1;
+				THROW 61000, 'ModelID cannot be NULL', 1;
+			END
+		IF NOT EXISTS (SELECT TOP 1 ModelID FROM Assets.Models WHERE ModelID = @ModelID)
+			BEGIN
+				ROLLBACK TRANSACTION;
+				THROW 61001, 'ModelID does not exist', 1;
 			END
 		ELSE
 			BEGIN
@@ -424,13 +443,13 @@ BEGIN TRY
 			END
 END TRY
 BEGIN CATCH
-	EXEC dbo.ErrorHandling;
+	EXEC Auditing.ErrorHandling;
 	RETURN 0;					--Return False to the application, so we can report the error to the user.
 END CATCH;
 GO
 
 CREATE PROCEDURE Assets.GetModels(
-	@ModelName	INT = NULL
+	@ModelName	NVARCHAR(20) = NULL
 )
 AS
 BEGIN TRY
@@ -449,7 +468,7 @@ BEGIN TRY
 	SET NOCOUNT OFF;
 END TRY
 BEGIN CATCH
-	EXEC dbo.ErrorLogging
+	EXEC Auditing.ErrorLogging
 	RETURN 0;
 END CATCH;
 GO
@@ -478,41 +497,43 @@ BEGIN TRY
 			END
 END TRY
 BEGIN CATCH
-	EXEC dbo.ErrorHandling;
+	EXEC Auditing.ErrorHandling;
 	RETURN 0;					--Return False to the application, so we can report the error to the user.
 END CATCH;
 GO
 
-CREATE PROCEDURE Assets.AddSwitch_JSON(
-	@SwitchName NVARCHAR(12) = N'',
-	@ModelID	INT,
-	@Speed		INT,
-	@Zones		NVARCHAR(200),
-	@VLANS		NVARCHAR(200)
-)
-AS
-BEGIN TRY
-	SET XACT_ABORT ON;
-	SET NOCOUNT ON;
-	BEGIN TRANSACTION
-		IF NOT EXISTS (SELECT SwitchName FROM Assets.Switches WHERE SwitchName LIKE '%'+@SwitchName+'%')
-			BEGIN
-				INSERT INTO Assets.Switches_JSON(SwitchName, ModelID, PortSpeed, Zones, VLANS)
-				VALUES		(@SwitchName, @ModelID, @Speed, @Zones, @VLANS)
-				COMMIT TRANSACTION;
-				RETURN 1;
-			END
-		ELSE
-			BEGIN
-				ROLLBACK TRANSACTION;
-				THROW 60000, 'SwitchName already exists', 1;
-			END
-END TRY
-BEGIN CATCH
-	EXEC dbo.ErrorHandling;
-	RETURN 0;					--Return False to the application, so we can report the error to the user.
-END CATCH;
-GO
+--Currently deprecated, not used at the moment.
+--CREATE PROCEDURE Assets.AddSwitch_JSON(
+--	@SwitchName NVARCHAR(12) = N'',
+--	@ModelID	INT,
+--	@Speed		INT,
+--	@Zones		NVARCHAR(200),
+--	@VLANS		NVARCHAR(200)
+--)
+--AS
+--BEGIN TRY
+--	SET XACT_ABORT ON;
+--	SET NOCOUNT ON;
+--	BEGIN TRANSACTION
+--		IF NOT EXISTS (SELECT SwitchName FROM Assets.Switches WHERE SwitchName LIKE '%'+@SwitchName+'%')
+--			BEGIN
+--				INSERT INTO Assets.Switches_JSON(SwitchName, ModelID, PortSpeed, Zones, VLANS)
+--				VALUES		(@SwitchName, @ModelID, @Speed, @Zones, @VLANS)
+--				COMMIT TRANSACTION;
+--				RETURN 1;
+--			END
+--		ELSE
+--			BEGIN
+--				ROLLBACK TRANSACTION;
+--				THROW 60000, 'SwitchName already exists', 1;
+--			END
+--END TRY
+--BEGIN CATCH
+--	EXEC Auditing.ErrorHandling;
+--	RETURN 0;					--Return False to the application, so we can report the error to the user.
+--END CATCH;
+--GO
+
 
 CREATE PROCEDURE Assets.RemoveSwitch(
 	@SwitchID	INT
@@ -536,10 +557,89 @@ BEGIN TRY
 			END
 END TRY
 BEGIN CATCH
-	EXEC dbo.ErrorHandling;
+	EXEC Auditing.ErrorHandling;
 	RETURN 0;					--Return False to the application, so we can report the error to the user.
 END CATCH;
 GO
+
+CREATE PROCEDURE Assets.UpdateSwitch(
+	@SwitchID	INT = NULL,
+	@SwitchName	NVARCHAR(20),
+	@ModelID	INT,
+	@PortSpeed	INT,
+	@PortRange	INT
+)
+AS
+BEGIN TRY
+	SET XACT_ABORT ON;
+	SET NOCOUNT ON;
+	BEGIN TRANSACTION
+		IF (@SwitchID IS NULL)
+			BEGIN
+				ROLLBACK TRANSACTION;
+				THROW 61000, 'SwitchID cannot be NULL', 1;
+			END
+		IF NOT EXISTS (SELECT TOP 1 SwitchID FROM Assets.Switches WHERE SwitchID = @SwitchID)
+			BEGIN
+				ROLLBACK TRANSACTION;
+				THROW 61001, 'SwitchID does not exist', 1;
+			END
+		ELSE
+			BEGIN
+				UPDATE	Assets.Switches
+				SET		SwitchName = @SwitchName,
+						ModelID = @ModelID,
+						PortSpeed = @PortSpeed,
+						PortRange = @PortRange
+				WHERE	SwitchID = @SwitchID
+				COMMIT TRANSACTION;
+				RETURN 1;
+			END
+END TRY
+BEGIN CATCH
+	EXEC Auditing.ErrorHandling;
+	RETURN 0;					--Return False to the application, so we can report the error to the user.
+END CATCH;
+GO
+
+
+CREATE PROCEDURE Assets.GetSwitches(
+	@SwitchName	NVARCHAR(30) = NULL
+)
+AS
+BEGIN TRY
+	SET NOCOUNT ON;
+	IF @SwitchName IS NULL
+		BEGIN
+			SELECT	SW.SwitchID,
+					SW.SwitchName,
+					MO.SwitchModel,
+					SW.PortSpeed,
+					SW.PortRange
+			FROM	Assets.Switches AS SW
+			JOIN	Assets.Models AS MO
+					ON SW.ModelID = MO.ModelID
+		END
+	ELSE
+		BEGIN
+			SELECT	SW.SwitchID,
+					SW.SwitchName,
+					MO.SwitchModel,
+					SW.PortSpeed,
+					SW.PortRange
+			FROM	Assets.Switches AS SW
+			JOIN	Assets.Models AS MO
+					ON SW.ModelID = MO.ModelID
+			WHERE	SW.SwitchName LIKE '%' + @SwitchName + '%'
+		END
+	SET NOCOUNT OFF;
+END TRY
+BEGIN CATCH
+	EXEC Auditing.ErrorLogging
+	RETURN 0;
+END CATCH;
+GO
+
 
 CREATE PROCEDURE OrderDetails.GetCourses(
 	@CourseID	INT
@@ -566,7 +666,7 @@ BEGIN TRY
 	SET NOCOUNT OFF;
 END TRY
 BEGIN CATCH
-	EXEC dbo.ErrorLogging
+	EXEC Auditing.ErrorLogging
 	RETURN 0;
 END CATCH;
 GO
