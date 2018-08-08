@@ -18,6 +18,10 @@ IF OBJECT_ID('Auditing.ErrorHandling', 'P')	IS NOT NULL DROP PROCEDURE Auditing.
 -------------------------------------------------------------------------
 --Drop Procedures.
 -------------------------------------------------------------------------
+IF OBJECT_ID('Config.GetVLANs', 'P')		IS NOT NULL DROP PROCEDURE Config.GetVLANs;
+IF OBJECT_ID('Config.UpdateVLAN', 'P')		IS NOT NULL DROP PROCEDURE Config.UpdateVLAN;
+IF OBJECT_ID('Config.RemoveVLAN', 'P')		IS NOT NULL DROP PROCEDURE Config.RemoveVLAN;
+IF OBJECT_ID('Config.AddVLAN', 'P')			IS NOT NULL DROP PROCEDURE Config.AddVLAN;
 IF OBJECT_ID('Config.GetZones', 'P')		IS NOT NULL DROP PROCEDURE Config.GetZones;
 IF OBJECT_ID('Config.UpdateZone', 'P')		IS NOT NULL DROP PROCEDURE Config.UpdateZone;
 IF OBJECT_ID('Config.RemoveZone', 'P')		IS NOT NULL DROP PROCEDURE Config.RemoveZone;
@@ -792,6 +796,133 @@ BEGIN CATCH
 	RETURN 0;
 END CATCH;
 GO
+
+CREATE PROCEDURE Config.AddVLAN(
+	@VLAN		INT,
+	@SwitchID	INT,
+	@ZoneID		INT
+)
+AS
+BEGIN TRY
+	SET XACT_ABORT ON;
+	SET NOCOUNT ON;
+	BEGIN TRANSACTION
+		IF NOT EXISTS (SELECT VLANID FROM Config.VLANs WHERE VLANID = @VLAN)
+			BEGIN
+				INSERT INTO	Config.VLANs(VLANID, SwitchID, ZoneID)
+				VALUES		(@VLAN, @SwitchID, @ZoneID)
+				RETURN 1;
+			END
+		ELSE
+			BEGIN
+				ROLLBACK TRANSACTION;
+				THROW 60000, 'ZoneName already exists', 1;
+			END
+END TRY
+BEGIN CATCH
+	EXEC Auditing.ErrorHandling;
+	RETURN 0;					--Return False to the application, so we can report the error to the user.
+END CATCH;
+GO
+
+CREATE PROCEDURE Config.RemoveVLAN(
+	@VLANID	INT
+)
+AS
+BEGIN TRY
+	SET XACT_ABORT ON;
+	SET NOCOUNT ON;
+	BEGIN TRANSACTION
+		IF (@VLANID IS NULL)
+			BEGIN
+				ROLLBACK TRANSACTION;
+				THROW 61000, 'VLANID cannot be NULL', 1;
+			END
+		IF NOT EXISTS (SELECT TOP 1 VLANID FROM Config.VLANs WHERE VLANID = @VLANID)
+			BEGIN
+				ROLLBACK TRANSACTION;
+				THROW 61001, 'VLANID does not exist', 1;
+			END
+		ELSE
+			BEGIN
+				DELETE FROM Config.VLANs
+				WHERE		VLANID = @VLANID
+				COMMIT TRANSACTION;
+				RETURN 1;
+			END
+END TRY
+BEGIN CATCH
+	EXEC Auditing.ErrorHandling;
+	RETURN 0;					--Return False to the application, so we can report the error to the user.
+END CATCH;
+GO
+
+CREATE PROCEDURE Config.UpdateVLAN(
+	@VLANID		INT,
+	@SwitchID	INT,
+	@ZoneID		INT
+)
+AS
+BEGIN TRY
+	SET XACT_ABORT ON;
+	SET NOCOUNT ON;
+	BEGIN TRANSACTION
+		IF (@VLANID IS NULL)
+			BEGIN
+				ROLLBACK TRANSACTION;
+				THROW 61000, 'VLANID cannot be NULL', 1;
+			END
+		IF NOT EXISTS (SELECT TOP 1 VLANID FROM Config.VLANs WHERE VLANID = @VLANID)
+			BEGIN
+				ROLLBACK TRANSACTION;
+				THROW 61001, 'VLANID does not exist', 1;
+			END
+		ELSE
+			BEGIN
+				UPDATE	Config.VLANs
+				SET		VLANID = @VLANID,
+						SwitchID = @SwitchID,
+						ZoneID = @ZoneID
+				WHERE	VLANID = @VLANID
+				COMMIT TRANSACTION;
+				RETURN 1;
+			END
+END TRY
+BEGIN CATCH
+	EXEC Auditing.ErrorHandling;
+	RETURN 0;					--Return False to the application, so we can report the error to the user.
+END CATCH;
+GO
+
+CREATE PROCEDURE Config.GetVLANs(
+	@VLANID	NVARCHAR(20)
+)
+AS
+BEGIN TRY
+	SET NOCOUNT ON;
+	IF @VLANID IS NULL
+		BEGIN
+			SELECT	VLANID,
+					SwitchID,
+					ZoneID
+			FROM	Config.VLANs
+		END
+	ELSE
+		BEGIN
+			SELECT	VLANID,
+					SwitchID,
+					ZoneID
+			FROM	Config.VLANs
+			WHERE	VLANID = @VLANID --Might have to change this depending on what we want to filter.
+		END
+	SET NOCOUNT OFF;
+END TRY
+BEGIN CATCH
+	EXEC Auditing.ErrorLogging
+	RETURN 0;
+END CATCH;
+GO
+
 
 SET XACT_ABORT OFF;
 GO
