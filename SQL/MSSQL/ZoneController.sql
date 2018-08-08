@@ -18,6 +18,10 @@ IF OBJECT_ID('Auditing.ErrorHandling', 'P')	IS NOT NULL DROP PROCEDURE Auditing.
 -------------------------------------------------------------------------
 --Drop Procedures.
 -------------------------------------------------------------------------
+IF OBJECT_ID('Config.GetZones', 'P')		IS NOT NULL DROP PROCEDURE Config.GetZones;
+IF OBJECT_ID('Config.UpdateZone', 'P')		IS NOT NULL DROP PROCEDURE Config.UpdateZone;
+IF OBJECT_ID('Config.RemoveZone', 'P')		IS NOT NULL DROP PROCEDURE Config.RemoveZone;
+IF OBJECT_ID('Config.AddZone', 'P')			IS NOT NULL DROP PROCEDURE Config.AddZone;
 IF OBJECT_ID('OrderDetails.GetCourses', 'P')IS NOT NULL DROP PROCEDURE OrderDetails.GetCourses;
 IF OBJECT_ID('Assets.GetSwitches', 'P')		IS NOT NULL DROP PROCEDURE Assets.GetSwitches;
 IF OBJECT_ID('Assets.UpdateSwitch', 'P')	IS NOT NULL DROP PROCEDURE Assets.UpdateSwitch;
@@ -216,6 +220,8 @@ CREATE TABLE Person.Users
 	LastName	NVARCHAR(50)		NULL,
 	LogonName	NVARCHAR(20)		NULL,
 	EMail		NVARCHAR(100)		NULL,
+	HashedKey	VARBINARY(8000)		NOT NULL,
+	OBJGUID		UNIQUEIDENTIFIER	NOT NULL	CONSTRAINT	DF_OBJGUID	DEFAULT	NEWID(), --Might be placed in another table for salting.
 	CONSTRAINT	PK_UserID
 	PRIMARY KEY	(UserID)
 );
@@ -275,13 +281,12 @@ CREATE TABLE Offices.Addresses
 	CONSTRAINT		PK_AddressID
 	PRIMARY KEY		(AddressID)
 	--AddressTypeID	INT					NOT NULL,
-	/*Hvis vi skal ha adresser andre steder enn lokasjon kan vi ta med dette og lage en ny tabell.
-	Tankegangen er som følger:
-	Si vi har 2 tabeller
-		Users
-		Locations
-	Begge tabellene skal inneholde en adresse.
-	Derfor vil typen adresse gjelde enten Users eller Locations
+	/*
+	If we are using other types of addresses, such as one for locations and one for users.
+	The mindset will be as following:
+	Create another table(AddressType) and add the following types.
+	Users
+	Locations
 	*/
 );
 GO
@@ -291,8 +296,8 @@ CREATE TABLE Offices.Locations
 	LocationID		INT	IDENTITY(1,1)	NOT NULL,
 	LocationName	NVARCHAR(50)		NULL,
 	AddressID		INT					NULL,
-	ContactID		INT					NULL,
-	Code			NVARCHAR(6)			NULL,
+	ContactID		INT					NULL,  -- This would be the userid from the user table.
+	Code			NVARCHAR(20)		NULL,
 	CONSTRAINT		PK_LocationID
 	PRIMARY KEY		(LocationID),
 	CONSTRAINT		FK_Addresses_AddressID_Locations
@@ -338,7 +343,7 @@ GO
 
 CREATE PROCEDURE Auditing.ErrorHandling
 AS
-	EXEC Auditing.ErrorLogging;			--Execute ErrorLogging, so we can log the error that triggered the catch block.
+	EXEC Auditing.ErrorLogging;		--Execute ErrorLogging, so we can log the error that triggered the catch block.
 	IF @@TRANCOUNT <> 0				--Check transaction count, if there is a uncommited transaction do a ROLLBACK.
 		BEGIN
 			ROLLBACK TRANSACTION;
@@ -363,7 +368,7 @@ BEGIN TRY
 	SET XACT_ABORT ON;
 	SET NOCOUNT ON;
 	BEGIN TRANSACTION
-		IF NOT EXISTS (SELECT SwitchModel FROM Assets.Models WHERE SwitchModel LIKE '%'+@ModelName+'%')
+		IF NOT EXISTS (SELECT ModelID FROM Assets.Models WHERE SwitchModel LIKE '%'+@ModelName+'%')
 			BEGIN
 				INSERT INTO Assets.Models(SwitchModel)
 				VALUES		(@ModelName)
@@ -483,7 +488,7 @@ BEGIN TRY
 	SET XACT_ABORT ON;
 	SET NOCOUNT ON;
 	BEGIN TRANSACTION
-		IF NOT EXISTS (SELECT SwitchName FROM Assets.Switches WHERE SwitchName LIKE '%'+@SwitchName+'%')
+		IF NOT EXISTS (SELECT SwitchID FROM Assets.Switches WHERE SwitchName LIKE '%'+@SwitchName+'%')
 			BEGIN
 				INSERT INTO Assets.Switches(SwitchName, ModelID, PortSpeed)
 				VALUES		(@SwitchName, @ModelID, @Speed)
@@ -663,6 +668,123 @@ BEGIN TRY
 				ON COR.ZoneID = ZON.ZoneID
 		JOIN	Person.Users AS USR
 				ON COR.OrganizerID = USR.UserID
+	SET NOCOUNT OFF;
+END TRY
+BEGIN CATCH
+	EXEC Auditing.ErrorLogging
+	RETURN 0;
+END CATCH;
+GO
+
+CREATE PROCEDURE Config.AddZone(
+	@ZoneName	NVARCHAR(20)
+)
+AS
+BEGIN TRY
+	SET XACT_ABORT ON;
+	SET NOCOUNT ON;
+	BEGIN TRANSACTION
+		IF NOT EXISTS (SELECT ZoneID FROM Config.Zones WHERE ZoneName LIKE '%'+@ZoneName+'%')
+			BEGIN
+				INSERT INTO	Config.Zones(ZoneName)
+				VALUES		(@ZoneName)
+				RETURN 1;
+			END
+		ELSE
+			BEGIN
+				ROLLBACK TRANSACTION;
+				THROW 60000, 'ZoneName already exists', 1;
+			END
+END TRY
+BEGIN CATCH
+	EXEC Auditing.ErrorHandling;
+	RETURN 0;					--Return False to the application, so we can report the error to the user.
+END CATCH;
+GO
+
+CREATE PROCEDURE Config.RemoveZone(
+	@ZoneID	INT
+)
+AS
+BEGIN TRY
+	SET XACT_ABORT ON;
+	SET NOCOUNT ON;
+	BEGIN TRANSACTION
+		IF (@ZoneID IS NULL)
+			BEGIN
+				ROLLBACK TRANSACTION;
+				THROW 61000, 'ZoneID cannot be NULL', 1;
+			END
+		IF NOT EXISTS (SELECT TOP 1 ZoneID FROM Config.Zones WHERE ZoneID = @ZoneID)
+			BEGIN
+				ROLLBACK TRANSACTION;
+				THROW 61001, 'ZoneID does not exist', 1;
+			END
+		ELSE
+			BEGIN
+				DELETE FROM Config.Zones
+				WHERE		ZoneID = @ZoneID
+				COMMIT TRANSACTION;
+				RETURN 1;
+			END
+END TRY
+BEGIN CATCH
+	EXEC Auditing.ErrorHandling;
+	RETURN 0;					--Return False to the application, so we can report the error to the user.
+END CATCH;
+GO
+
+CREATE PROCEDURE Config.UpdateZone(
+	@ZoneID		INT,
+	@ZoneName	NVARCHAR(20) = NULL
+)
+AS
+BEGIN TRY
+	SET XACT_ABORT ON;
+	SET NOCOUNT ON;
+	BEGIN TRANSACTION
+		IF (@ZoneID IS NULL)
+			BEGIN
+				ROLLBACK TRANSACTION;
+				THROW 61000, 'ZoneID cannot be NULL', 1;
+			END
+		IF NOT EXISTS (SELECT TOP 1 ZoneID FROM Config.Zones WHERE ZoneID = @ZoneID)
+			BEGIN
+				ROLLBACK TRANSACTION;
+				THROW 61001, 'ZoneID does not exist', 1;
+			END
+		ELSE
+			BEGIN
+				UPDATE	Config.Zones
+				SET		ZoneName = @ZoneName
+				WHERE	ZoneID = @ZoneID
+				COMMIT TRANSACTION;
+				RETURN 1;
+			END
+END TRY
+BEGIN CATCH
+	EXEC Auditing.ErrorHandling;
+	RETURN 0;					--Return False to the application, so we can report the error to the user.
+END CATCH;
+GO
+
+CREATE PROCEDURE Config.GetZones(
+	@ZoneName	NVARCHAR(20)
+)
+AS
+BEGIN TRY
+	SET NOCOUNT ON;
+	IF @ZoneName IS NULL
+		BEGIN
+			SELECT	ZoneName
+			FROM	Config.Zones
+		END
+	ELSE
+		BEGIN
+			SELECT	ZoneName
+			FROM	Config.Zones
+			WHERE	ZoneName LIKE '%'+@ZoneName+'%' --Might have to change this depending on what we want to filter, this will scan the table.
+		END
 	SET NOCOUNT OFF;
 END TRY
 BEGIN CATCH
