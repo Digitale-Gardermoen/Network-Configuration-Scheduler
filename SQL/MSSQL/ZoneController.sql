@@ -106,8 +106,7 @@ CREATE TABLE Assets.Switches
 	SwitchID	INT	IDENTITY(1,1)	NOT NULL,
 	SwitchName	NVARCHAR(30)		NOT NULL,
 	ModelID		INT					NOT NULL,
-	PortSpeed	INT					NOT NULL,
-	PortRange	INT					NOT NULL,
+	PortRange	INT					NOT NULL, --FA0/1-12 e.g, change this to include speed(fa, gi)
 	CONSTRAINT	PK_SwitchID
 	PRIMARY KEY	(SwitchID),
 	CONSTRAINT	FK_Models_ModelID_Switches
@@ -224,8 +223,7 @@ CREATE TABLE Person.Users
 	LastName	NVARCHAR(50)		NULL,
 	LogonName	NVARCHAR(20)		NULL,
 	EMail		NVARCHAR(100)		NULL,
-	HashedKey	VARBINARY(8000)		NOT NULL,
-	OBJGUID		UNIQUEIDENTIFIER	NOT NULL	CONSTRAINT	DF_OBJGUID	DEFAULT	NEWID(), --Might be placed in another table for salting.
+	OBJGUID		UNIQUEIDENTIFIER	NOT NULL	CONSTRAINT	DF_OBJGUID	DEFAULT	NEWID(), -- Use this for AD objguid?
 	CONSTRAINT	PK_UserID
 	PRIMARY KEY	(UserID)
 );
