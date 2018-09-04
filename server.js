@@ -19,6 +19,9 @@ app.use("/booking",booking);
 var admin = require('./routes/admin');
 app.use("/admin",admin);
 
+const switches = require('./api/routes/switch');
+app.use("/switches", switches)
+
 // listen for requests :)
 var listener = app.listen(process.env.PORT, function () {
 	console.log('Your app is listening on port ' + listener.address().port);
