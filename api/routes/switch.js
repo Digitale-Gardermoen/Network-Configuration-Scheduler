@@ -4,7 +4,7 @@ const router = require('express').Router()
 // Main router
 router.route('/')
     .get((req, res) => {
-        switches.GetSwitches()
+        switches.GetSwitches(req, res)
         //res.json({ message: ['/', 'Main router!'] })
     })
 
