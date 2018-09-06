@@ -14,9 +14,9 @@ const dbConfig = {
 //Function to connect to database and execute query
 exports.executeQuery = async function(callback, query){
     try {
-        var pool = await sql.connect(dbConfig);
+        const pool = await sql.connect(dbConfig);
     
-        var result = await pool.request()
+        const result = await pool.request()
             //.input('SwitchName', sql.NVarChar(30), null)
             //.output('output_parameter', sql.VarChar(50))
             .execute(query);
