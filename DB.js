@@ -1,7 +1,7 @@
 const sql = require('mssql')
 
 const dbConfig = {
-    server: 'localhost\\DOTDB', //Enable TCP/IP and have SQL Server browser running
+    server: 'localhost', //Enable TCP/IP and have SQL Server browser running
     database: 'ZoneController', 
     user: 'test', //Set security to allow SQL logins, it is default to Integrated only.
     password: 'test',

@@ -4,8 +4,7 @@ const router = require('express').Router()
 // Main router
 router.route('/:SwitchName')
     .get((req, res) => {
-        res.send(req.params);
-        //switches.GetSwitches(req, res, req.params);
-    })
+        switches.GetSwitches(req, res, req.params.SwitchName)
+    });
 
 module.exports = router
