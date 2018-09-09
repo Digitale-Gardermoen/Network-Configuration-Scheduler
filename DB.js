@@ -34,6 +34,7 @@ exports.executeProcedure = async function(callback, query, inputName, inputVal){
     }
     catch(err){
         console.log(err)
+        sql.close()
     }
     sql.on('error', err => {
         // ... error handler

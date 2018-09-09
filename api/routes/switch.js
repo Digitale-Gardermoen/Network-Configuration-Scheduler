@@ -2,10 +2,10 @@ const switches = require('../controller/switch')
 const router = require('express').Router()
 
 // Main router
-router.route('/')
+router.route('/:SwitchName')
     .get((req, res) => {
-        switches.GetSwitches(req, res)
-        //res.json({ message: ['/', 'Main router!'] })
+        res.send(req.params);
+        //switches.GetSwitches(req, res, req.params);
     })
 
 module.exports = router
