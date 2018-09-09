@@ -13,11 +13,11 @@ app.all("/",function(req, res){
 });
 
 // load routes and connect them to their paths
-var booking = require('./routes/booking');
-app.use("/booking",booking);
+var booking = require('./api/routes/booking');
+app.use("/booking", booking);
 
-var admin = require('./routes/admin');
-app.use("/admin",admin);
+var admin = require('./api/routes/admin');
+app.use("/admin", admin);
 
 const switches = require('./api/routes/switch');
 app.use("/switches", switches)
