@@ -510,11 +510,23 @@ GO
 
 
 CREATE PROCEDURE Assets.GetSwitches(
+	@SwitchID	INT = NULL,
 	@SwitchName	NVARCHAR(30) = NULL
 )
 AS
 BEGIN TRY
 	SET NOCOUNT ON;
+	IF @SwitchID IS NOT NULL
+		BEGIN
+			SELECT	SW.SwitchID,
+					SW.SwitchName,
+					MO.SwitchModel,
+					SW.PortRange
+			FROM	Assets.Switches AS SW
+			JOIN	Assets.Models AS MO
+					ON SW.ModelID = MO.ModelID
+			WHERE	SW.SwitchID = @SwitchID
+		END
 	IF @SwitchName IS NULL
 		BEGIN
 			SELECT	SW.SwitchID,
