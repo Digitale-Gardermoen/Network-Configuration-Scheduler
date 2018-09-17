@@ -12,59 +12,63 @@ GO
 -------------------------------------------------------------------------
 --Drop ErrorLogging
 -------------------------------------------------------------------------
-IF OBJECT_ID('Auditing.CatchErrors', 'U')	IS NOT NULL DROP TABLE Auditing.CatchErrors;
-IF OBJECT_ID('Auditing.ErrorLogging', 'P')	IS NOT NULL DROP PROCEDURE Auditing.ErrorLogging;
-IF OBJECT_ID('Auditing.ErrorHandling', 'P')	IS NOT NULL DROP PROCEDURE Auditing.ErrorHandling;
+IF OBJECT_ID('Auditing.CatchErrors', 'U')		IS NOT NULL DROP TABLE Auditing.CatchErrors;
+IF OBJECT_ID('Auditing.ErrorLogging', 'P')		IS NOT NULL DROP PROCEDURE Auditing.ErrorLogging;
+IF OBJECT_ID('Auditing.ErrorHandling', 'P')		IS NOT NULL DROP PROCEDURE Auditing.ErrorHandling;
 -------------------------------------------------------------------------
 --Drop Procedures.
 -------------------------------------------------------------------------
-IF OBJECT_ID('OrderDetails.GetCourses', 'P')IS NOT NULL DROP PROCEDURE OrderDetails.GetCourses;
-IF OBJECT_ID('Person.GetUsers', 'P')		IS NOT NULL DROP PROCEDURE Person.GetUsers;
-IF OBJECT_ID('Person.UpdateUser', 'P')		IS NOT NULL DROP PROCEDURE Person.UpdateUser;
-IF OBJECT_ID('Person.RemoveUser', 'P')		IS NOT NULL DROP PROCEDURE Person.RemoveUser;
-IF OBJECT_ID('Person.AddUser', 'P')			IS NOT NULL DROP PROCEDURE Person.AddUser;
-IF OBJECT_ID('Config.GetRooms', 'P')		IS NOT NULL DROP PROCEDURE Config.GetRooms;
-IF OBJECT_ID('Config.UpdateRoom', 'P')		IS NOT NULL DROP PROCEDURE Config.UpdateRoom;
-IF OBJECT_ID('Config.RemoveRoom', 'P')		IS NOT NULL DROP PROCEDURE Config.RemoveRoom;
-IF OBJECT_ID('Config.AddRoom', 'P')			IS NOT NULL DROP PROCEDURE Config.AddRoom;
-IF OBJECT_ID('Config.GetVLANs', 'P')		IS NOT NULL DROP PROCEDURE Config.GetVLANs;
-IF OBJECT_ID('Config.UpdateVLAN', 'P')		IS NOT NULL DROP PROCEDURE Config.UpdateVLAN;
-IF OBJECT_ID('Config.RemoveVLAN', 'P')		IS NOT NULL DROP PROCEDURE Config.RemoveVLAN;
-IF OBJECT_ID('Config.AddVLAN', 'P')			IS NOT NULL DROP PROCEDURE Config.AddVLAN;
-IF OBJECT_ID('Config.GetZones', 'P')		IS NOT NULL DROP PROCEDURE Config.GetZones;
-IF OBJECT_ID('Config.UpdateZone', 'P')		IS NOT NULL DROP PROCEDURE Config.UpdateZone;
-IF OBJECT_ID('Config.RemoveZone', 'P')		IS NOT NULL DROP PROCEDURE Config.RemoveZone;
-IF OBJECT_ID('Config.AddZone', 'P')			IS NOT NULL DROP PROCEDURE Config.AddZone;
-IF OBJECT_ID('Assets.GetSwitches', 'P')		IS NOT NULL DROP PROCEDURE Assets.GetSwitches;
-IF OBJECT_ID('Assets.UpdateSwitch', 'P')	IS NOT NULL DROP PROCEDURE Assets.UpdateSwitch;
-IF OBJECT_ID('Assets.RemoveSwitch', 'P')	IS NOT NULL DROP PROCEDURE Assets.RemoveSwitch;
-IF OBJECT_ID('Assets.AddSwitch', 'P')		IS NOT NULL DROP PROCEDURE Assets.AddSwitch;
-IF OBJECT_ID('Assets.GetModels', 'P')		IS NOT NULL DROP PROCEDURE Assets.GetModels;
-IF OBJECT_ID('Assets.UpdateModel', 'P')		IS NOT NULL DROP PROCEDURE Assets.UpdateModel;
-IF OBJECT_ID('Assets.RemoveModel', 'P')		IS NOT NULL DROP PROCEDURE Assets.RemoveModel;
-IF OBJECT_ID('Assets.AddModel', 'P')		IS NOT NULL DROP PROCEDURE Assets.AddModel;
+IF OBJECT_ID('OrderDetails.GetCourses', 'P')	IS NOT NULL DROP PROCEDURE OrderDetails.GetCourses;
+IF OBJECT_ID('Person.GetUsers', 'P')			IS NOT NULL DROP PROCEDURE Person.GetUsers;
+IF OBJECT_ID('Person.UpdateUser', 'P')			IS NOT NULL DROP PROCEDURE Person.UpdateUser;
+IF OBJECT_ID('Person.RemoveUser', 'P')			IS NOT NULL DROP PROCEDURE Person.RemoveUser;
+IF OBJECT_ID('Person.AddUser', 'P')				IS NOT NULL DROP PROCEDURE Person.AddUser;
+IF OBJECT_ID('Config.GetRoomByID', 'P')			IS NOT NULL DROP PROCEDURE Config.GetRoomByID;
+IF OBJECT_ID('Config.GetRooms', 'P')			IS NOT NULL DROP PROCEDURE Config.GetRooms;
+IF OBJECT_ID('Config.UpdateRoom', 'P')			IS NOT NULL DROP PROCEDURE Config.UpdateRoom;
+IF OBJECT_ID('Config.RemoveRoom', 'P')			IS NOT NULL DROP PROCEDURE Config.RemoveRoom;
+IF OBJECT_ID('Config.AddRoom', 'P')				IS NOT NULL DROP PROCEDURE Config.AddRoom;
+IF OBJECT_ID('Config.GetVLANs', 'P')			IS NOT NULL DROP PROCEDURE Config.GetVLANs;
+IF OBJECT_ID('Config.UpdateVLAN', 'P')			IS NOT NULL DROP PROCEDURE Config.UpdateVLAN;
+IF OBJECT_ID('Config.RemoveVLAN', 'P')			IS NOT NULL DROP PROCEDURE Config.RemoveVLAN;
+IF OBJECT_ID('Config.AddVLAN', 'P')				IS NOT NULL DROP PROCEDURE Config.AddVLAN;
+IF OBJECT_ID('Config.GetZones', 'P')			IS NOT NULL DROP PROCEDURE Config.GetZones;
+IF OBJECT_ID('Config.UpdateZone', 'P')			IS NOT NULL DROP PROCEDURE Config.UpdateZone;
+IF OBJECT_ID('Config.RemoveZone', 'P')			IS NOT NULL DROP PROCEDURE Config.RemoveZone;
+IF OBJECT_ID('Config.AddZone', 'P')				IS NOT NULL DROP PROCEDURE Config.AddZone;
+IF OBJECT_ID('Assets.GetSwitchByRoomID', 'P')	IS NOT NULL DROP PROCEDURE Assets.GetSwitchByRoomID;
+IF OBJECT_ID('Assets.GetSwitchByID', 'P')		IS NOT NULL DROP PROCEDURE Assets.GetSwitchByID;
+IF OBJECT_ID('Assets.GetSwitchByName', 'P')		IS NOT NULL DROP PROCEDURE Assets.GetSwitchByName;
+IF OBJECT_ID('Assets.GetSwitches', 'P')			IS NOT NULL DROP PROCEDURE Assets.GetSwitches;
+IF OBJECT_ID('Assets.UpdateSwitch', 'P')		IS NOT NULL DROP PROCEDURE Assets.UpdateSwitch;
+IF OBJECT_ID('Assets.RemoveSwitch', 'P')		IS NOT NULL DROP PROCEDURE Assets.RemoveSwitch;
+IF OBJECT_ID('Assets.AddSwitch', 'P')			IS NOT NULL DROP PROCEDURE Assets.AddSwitch;
+IF OBJECT_ID('Assets.GetModels', 'P')			IS NOT NULL DROP PROCEDURE Assets.GetModels;
+IF OBJECT_ID('Assets.UpdateModel', 'P')			IS NOT NULL DROP PROCEDURE Assets.UpdateModel;
+IF OBJECT_ID('Assets.RemoveModel', 'P')			IS NOT NULL DROP PROCEDURE Assets.RemoveModel;
+IF OBJECT_ID('Assets.AddModel', 'P')			IS NOT NULL DROP PROCEDURE Assets.AddModel;
 -------------------------------------------------------------------------
 --Drops Tables.
 -------------------------------------------------------------------------
-IF OBJECT_ID('Offices.Locations', 'U')		IS NOT NULL DROP TABLE Offices.Locations;
-IF OBJECT_ID('Offices.Addresses', 'U')		IS NOT NULL DROP TABLE Offices.Addresses;
-IF OBJECT_ID('OrderDetails.Orders', 'U')	IS NOT NULL DROP TABLE OrderDetails.Orders;
-IF OBJECT_ID('OrderDetails.Courses', 'U')	IS NOT NULL DROP TABLE OrderDetails.Courses;
-IF OBJECT_ID('Person.Users', 'U')			IS NOT NULL DROP TABLE Person.Users;
-IF OBJECT_ID('Config.Rooms', 'U')			IS NOT NULL DROP TABLE Config.Rooms;
-IF OBJECT_ID('Config.VLANs', 'U')			IS NOT NULL DROP TABLE Config.VLANs;
-IF OBJECT_ID('Config.Zones', 'U')			IS NOT NULL DROP TABLE Config.Zones;
-IF OBJECT_ID('Assets.Switches', 'U')		IS NOT NULL DROP TABLE Assets.Switches;
-IF OBJECT_ID('Assets.Models', 'U')			IS NOT NULL DROP TABLE Assets.Models;
+IF OBJECT_ID('Offices.Locations', 'U')			IS NOT NULL DROP TABLE Offices.Locations;
+IF OBJECT_ID('Offices.Addresses', 'U')			IS NOT NULL DROP TABLE Offices.Addresses;
+IF OBJECT_ID('OrderDetails.Orders', 'U')		IS NOT NULL DROP TABLE OrderDetails.Orders;
+IF OBJECT_ID('OrderDetails.Courses', 'U')		IS NOT NULL DROP TABLE OrderDetails.Courses;
+IF OBJECT_ID('Person.Users', 'U')				IS NOT NULL DROP TABLE Person.Users;
+IF OBJECT_ID('Config.VLANs', 'U')				IS NOT NULL DROP TABLE Config.VLANs;
+IF OBJECT_ID('Assets.Switches', 'U')			IS NOT NULL DROP TABLE Assets.Switches;
+IF OBJECT_ID('Config.Rooms', 'U')				IS NOT NULL DROP TABLE Config.Rooms;
+IF OBJECT_ID('Config.Zones', 'U')				IS NOT NULL DROP TABLE Config.Zones;
+IF OBJECT_ID('Assets.Models', 'U')				IS NOT NULL DROP TABLE Assets.Models;
 -------------------------------------------------------------------------
 --Drop Schema if it exist.
 -------------------------------------------------------------------------
-IF SCHEMA_ID('Assets')						IS NOT NULL DROP SCHEMA Assets;
-IF SCHEMA_ID('Config')						IS NOT NULL DROP SCHEMA Config;
-IF SCHEMA_ID('OrderDetails')				IS NOT NULL DROP SCHEMA OrderDetails;
-IF SCHEMA_ID('Person')						IS NOT NULL DROP SCHEMA Person;
-IF SCHEMA_ID('Offices')						IS NOT NULL DROP SCHEMA Offices;
-IF SCHEMA_ID('Auditing')					IS NOT NULL DROP SCHEMA Auditing;
+IF SCHEMA_ID('Assets')							IS NOT NULL DROP SCHEMA Assets;
+IF SCHEMA_ID('Config')							IS NOT NULL DROP SCHEMA Config;
+IF SCHEMA_ID('OrderDetails')					IS NOT NULL DROP SCHEMA OrderDetails;
+IF SCHEMA_ID('Person')							IS NOT NULL DROP SCHEMA Person;
+IF SCHEMA_ID('Offices')							IS NOT NULL DROP SCHEMA Offices;
+IF SCHEMA_ID('Auditing')						IS NOT NULL DROP SCHEMA Auditing;
 -------------------------------------------------------------------------
 GO
 
@@ -93,21 +97,6 @@ CREATE TABLE Assets.Models
 );
 GO
 
-CREATE TABLE Assets.Switches
-(
-	SwitchID	INT	IDENTITY(1,1)	NOT NULL,
-	SwitchName	NVARCHAR(30)		NOT NULL,
-	ModelID		INT					NOT NULL,
-	PortRange	NVARCHAR(50)		NOT NULL,
-	CONSTRAINT	PK_SwitchID
-	PRIMARY KEY	(SwitchID),
-	CONSTRAINT	FK_Models_ModelID_Switches
-	FOREIGN KEY	(ModelID)
-	REFERENCES	Assets.Models,
-	CONSTRAINT	UQ_SwitchName
-	UNIQUE		(SwitchName)
-);
-GO
 
 CREATE TABLE Config.Zones
 (
@@ -115,6 +104,38 @@ CREATE TABLE Config.Zones
 	ZoneName	NVARCHAR(20)		NOT NULL,
 	CONSTRAINT	PK_ZoneID
 	PRIMARY KEY	(ZoneID)
+);
+GO
+
+CREATE TABLE Config.Rooms
+(
+	RoomID		INT	IDENTITY(1,1)	NOT NULL,
+	RoomName	NVARCHAR(50)		NOT NULL,
+	VLAN		INT					NULL,
+	CONSTRAINT	PK_RoomID
+	PRIMARY KEY	(RoomID),
+	CONSTRAINT	UQ_RoomName
+	UNIQUE		(RoomName)
+);
+GO
+
+CREATE TABLE Assets.Switches
+(
+	SwitchID	INT	IDENTITY(1,1)	NOT NULL,
+	SwitchName	NVARCHAR(30)		NOT NULL,
+	ModelID		INT					NOT NULL,
+	PortRange	NVARCHAR(50)		NOT NULL,
+	RoomID		INT					NOT NULL,
+	CONSTRAINT	PK_SwitchID
+	PRIMARY KEY	(SwitchID),
+	CONSTRAINT	FK_Models_ModelID_Switches
+	FOREIGN KEY	(ModelID)
+	REFERENCES	Assets.Models,
+	CONSTRAINT	UQ_SwitchName
+	UNIQUE		(SwitchName),
+	CONSTRAINT	FK_RoomID
+	FOREIGN KEY	(RoomID)
+	REFERENCES	Config.Rooms
 );
 GO
 
@@ -131,22 +152,6 @@ CREATE TABLE Config.VLANs
 	CONSTRAINT	FK_Zones_ZoneID_VLANs
 	FOREIGN KEY	(ZoneID)
 	REFERENCES	Config.Zones
-);
-GO
-
-CREATE TABLE Config.Rooms
-(
-	RoomID		INT	IDENTITY(1,1)	NOT NULL,
-	SwitchID	INT					NOT NULL,
-	RoomName	NVARCHAR(50)		NOT NULL,
-	VLAN		INT					NULL,
-	CONSTRAINT	PK_RoomID
-	PRIMARY KEY	(RoomID),
-	CONSTRAINT	FK_Switches_SwitchID_Rooms
-	FOREIGN KEY	(SwitchID)
-	REFERENCES	Assets.Switches,
-	CONSTRAINT	UQ_RoomName
-	UNIQUE		(RoomName)
 );
 GO
 
@@ -509,45 +514,95 @@ END CATCH;
 GO
 
 
-CREATE PROCEDURE Assets.GetSwitches(
-	@SwitchID	INT = NULL,
+CREATE PROCEDURE Assets.GetSwitches
+AS
+BEGIN TRY
+	SET NOCOUNT ON;
+	BEGIN
+		SELECT	SW.SwitchID,
+				SW.SwitchName,
+				MO.SwitchModel,
+				SW.PortRange
+		FROM	Assets.Switches AS SW
+		JOIN	Assets.Models AS MO
+				ON SW.ModelID = MO.ModelID
+	END
+	SET NOCOUNT OFF;
+END TRY
+BEGIN CATCH
+	EXEC Auditing.ErrorLogging
+	RETURN 0;
+END CATCH;
+GO
+
+
+CREATE PROCEDURE Assets.GetSwitchByName(
 	@SwitchName	NVARCHAR(30) = NULL
 )
 AS
 BEGIN TRY
 	SET NOCOUNT ON;
-	IF @SwitchID IS NOT NULL
-		BEGIN
-			SELECT	SW.SwitchID,
-					SW.SwitchName,
-					MO.SwitchModel,
-					SW.PortRange
-			FROM	Assets.Switches AS SW
-			JOIN	Assets.Models AS MO
-					ON SW.ModelID = MO.ModelID
-			WHERE	SW.SwitchID = @SwitchID
-		END
-	IF @SwitchName IS NULL
-		BEGIN
-			SELECT	SW.SwitchID,
-					SW.SwitchName,
-					MO.SwitchModel,
-					SW.PortRange
-			FROM	Assets.Switches AS SW
-			JOIN	Assets.Models AS MO
-					ON SW.ModelID = MO.ModelID
-		END
-	ELSE
-		BEGIN
-			SELECT	SW.SwitchID,
-					SW.SwitchName,
-					MO.SwitchModel,
-					SW.PortRange
-			FROM	Assets.Switches AS SW
-			JOIN	Assets.Models AS MO
-					ON SW.ModelID = MO.ModelID
-			WHERE	SW.SwitchName LIKE '%' + @SwitchName + '%'
-		END
+	BEGIN
+		SELECT	SW.RoomID,
+				SW.SwitchID,
+				SW.SwitchName,
+				MO.SwitchModel,
+				SW.PortRange
+		FROM	Assets.Switches AS SW
+		JOIN	Assets.Models AS MO
+				ON SW.ModelID = MO.ModelID
+		WHERE	SW.SwitchName = @SwitchName
+	END
+	SET NOCOUNT OFF;
+END TRY
+BEGIN CATCH
+	EXEC Auditing.ErrorLogging
+	RETURN 0;
+END CATCH;
+GO
+
+CREATE PROCEDURE Assets.GetSwitchByID(
+	@SwitchID	INT
+)
+AS
+BEGIN TRY
+	SET NOCOUNT ON;
+	BEGIN
+		SELECT	SW.RoomID,
+				SW.SwitchID,
+				SW.SwitchName,
+				MO.SwitchModel,
+				SW.PortRange
+		FROM	Assets.Switches AS SW
+		JOIN	Assets.Models AS MO
+				ON SW.ModelID = MO.ModelID
+		WHERE	SW.SwitchID = @SwitchID
+	END
+	SET NOCOUNT OFF;
+END TRY
+BEGIN CATCH
+	EXEC Auditing.ErrorLogging
+	RETURN 0;
+END CATCH;
+GO
+
+CREATE PROCEDURE Assets.GetSwitchByRoomID(
+	@RoomID	INT
+)
+AS
+BEGIN TRY
+	SET NOCOUNT ON;
+	BEGIN
+		SELECT	SW.RoomID,
+				SW.SwitchID,
+				SW.SwitchName,
+				MO.SwitchModel,
+				SW.PortRange
+		FROM	Assets.Switches AS SW
+		JOIN	Assets.Models AS MO
+				ON SW.ModelID = MO.ModelID
+		WHERE	SW.RoomID = @RoomID
+	END
 	SET NOCOUNT OFF;
 END TRY
 BEGIN CATCH
@@ -799,7 +854,6 @@ END CATCH;
 GO
 
 CREATE PROCEDURE Config.AddRoom(
-	@SwitchID	INT,
 	@RoomName	NVARCHAR(50),
 	@VLAN		INT
 )
@@ -810,8 +864,8 @@ BEGIN TRY
 	BEGIN TRANSACTION
 		IF NOT EXISTS (SELECT RoomID FROM Config.Rooms WHERE RoomName = @RoomName)
 			BEGIN
-				INSERT INTO	Config.Rooms(SwitchID, RoomName, VLAN)
-				VALUES		(@SwitchID, @RoomName, @VLAN)
+				INSERT INTO	Config.Rooms(RoomName, VLAN)
+				VALUES		(@RoomName, @VLAN)
 				RETURN 1;
 			END
 		ELSE
@@ -860,7 +914,6 @@ GO
 
 CREATE PROCEDURE Config.UpdateRoom(
 	@RoomID		INT,
-	@SwitchID	INT,
 	@RoomName	NVARCHAR(50),
 	@VLAN		INT
 )
@@ -882,8 +935,7 @@ BEGIN TRY
 		ELSE
 			BEGIN
 				UPDATE	Config.Rooms
-				SET		SwitchID = @SwitchID,
-						RoomName = @RoomName,
+				SET		RoomName = @RoomName,
 						VLAN = @VLAN
 				WHERE	RoomID = @RoomID
 				COMMIT TRANSACTION;
@@ -896,29 +948,37 @@ BEGIN CATCH
 END CATCH;
 GO
 
-CREATE PROCEDURE Config.GetRooms(
+CREATE PROCEDURE Config.GetRooms
+AS
+BEGIN TRY
+	SET NOCOUNT ON;
+		BEGIN
+			SELECT	RoomID,
+					RoomName,
+					VLAN
+			FROM	Config.Rooms
+		END
+	SET NOCOUNT OFF;
+END TRY
+BEGIN CATCH
+	EXEC Auditing.ErrorLogging
+	RETURN 0;
+END CATCH;
+GO
+
+CREATE PROCEDURE Config.GetRoomByID(
 	@RoomID	INT
 )
 AS
 BEGIN TRY
 	SET NOCOUNT ON;
-	IF @RoomID IS NULL
-		BEGIN
-			SELECT	RoomID,
-					SwitchID,
-					RoomName,
-					VLAN
-			FROM	Config.Rooms
-		END
-	ELSE
-		BEGIN
-			SELECT	RoomID,
-					SwitchID,
-					RoomName,
-					VLAN
-			FROM	Config.Rooms
-			WHERE	RoomID = @RoomID --Might have to change this depending on what we want to filter.
-		END
+	BEGIN
+		SELECT	RoomID,
+				RoomName,
+				VLAN
+		FROM	Config.Rooms
+		WHERE	RoomID = @RoomID --Might have to change this depending on what we want to filter.
+	END
 	SET NOCOUNT OFF;
 END TRY
 BEGIN CATCH
