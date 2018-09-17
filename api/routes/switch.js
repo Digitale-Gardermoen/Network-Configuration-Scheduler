@@ -4,17 +4,17 @@ const router = require('express').Router()
 // Main router
 router.route('/')
     .get((req, res) => {
-        switches.GetSwitches(req, res, null)
+        switches.getSwitches(req, res, null)
     });
 
-router.route('/ID=:SwitchID')
+router.route('/id/:switchID')
     .get((req, res) => {
-        switches.GetSwitchByID(req, res, req.params.SwitchID)
+        switches.getSwitchByID(req, res, req.params.switchID)
     });
 
-router.route('/SW=:SwitchName')
+router.route('/sw/:switchName')
     .get((req, res) => {
-        switches.GetSwitches(req, res, req.params.SwitchName)
+        switches.getSwitches(req, res, req.params.switchName)
     });
 
 module.exports = router

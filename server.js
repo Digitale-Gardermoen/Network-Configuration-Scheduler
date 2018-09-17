@@ -20,7 +20,10 @@ var admin = require('./api/routes/admin');
 app.use("/admin", admin);
 
 const switches = require('./api/routes/switch');
-app.use("/switches", switches)
+app.use("/switches", switches);
+
+const room = require('./api/routes/room');
+app.use("/room", room);
 
 // listen for requests :)
 var listener = app.listen(process.env.PORT, function () {
