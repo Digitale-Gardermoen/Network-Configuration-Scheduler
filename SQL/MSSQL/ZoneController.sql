@@ -28,6 +28,7 @@ IF OBJECT_ID('Config.GetRooms', 'P')			IS NOT NULL DROP PROCEDURE Config.GetRoom
 IF OBJECT_ID('Config.UpdateRoom', 'P')			IS NOT NULL DROP PROCEDURE Config.UpdateRoom;
 IF OBJECT_ID('Config.RemoveRoom', 'P')			IS NOT NULL DROP PROCEDURE Config.RemoveRoom;
 IF OBJECT_ID('Config.AddRoom', 'P')				IS NOT NULL DROP PROCEDURE Config.AddRoom;
+IF OBJECT_ID('Config.GetVLANBySwitchID', 'P')	IS NOT NULL DROP PROCEDURE Config.GetVLANBySwitchID;
 IF OBJECT_ID('Config.GetVLANs', 'P')			IS NOT NULL DROP PROCEDURE Config.GetVLANs;
 IF OBJECT_ID('Config.UpdateVLAN', 'P')			IS NOT NULL DROP PROCEDURE Config.UpdateVLAN;
 IF OBJECT_ID('Config.RemoveVLAN', 'P')			IS NOT NULL DROP PROCEDURE Config.RemoveVLAN;
@@ -824,27 +825,37 @@ BEGIN CATCH
 END CATCH;
 GO
 
-CREATE PROCEDURE Config.GetVLANs(
-	@VLANID	INT
+CREATE PROCEDURE Config.GetVLANs
+AS
+BEGIN TRY
+	SET NOCOUNT ON;
+	BEGIN
+		SELECT	VLANID,
+				SwitchID,
+				ZoneID
+		FROM	Config.VLANs
+	END
+	SET NOCOUNT OFF;
+END TRY
+BEGIN CATCH
+	EXEC Auditing.ErrorLogging
+	RETURN 0;
+END CATCH;
+GO
+
+CREATE PROCEDURE Config.GetVLANBySwitchID(
+	@SwitchID	INT
 )
 AS
 BEGIN TRY
 	SET NOCOUNT ON;
-	IF @VLANID IS NULL
-		BEGIN
-			SELECT	VLANID,
-					SwitchID,
-					ZoneID
-			FROM	Config.VLANs
-		END
-	ELSE
-		BEGIN
-			SELECT	VLANID,
-					SwitchID,
-					ZoneID
-			FROM	Config.VLANs
-			WHERE	VLANID = @VLANID --Might have to change this depending on what we want to filter.
-		END
+	BEGIN
+		SELECT	VLANID,
+				SwitchID,
+				ZoneID
+		FROM	Config.VLANs
+		WHERE	SwitchID = @SwitchID
+	END
 	SET NOCOUNT OFF;
 END TRY
 BEGIN CATCH
