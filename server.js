@@ -14,6 +14,21 @@ app.all("/",function(req, res){
 	res.json({"message":"Bad request, missing path."})
 });
 
+app.get("/roomconfig", (req, res) => {
+	// TODO: Insert actual code here. Below is placeholder for front-end testing
+	var zone = ["intern", "sikker"];
+	res.json({
+		room:"trollololo",
+		zone: zone[Math.round(Math.random())]
+	});
+});
+
+app.post("/roomconfig",(req, res)=>{
+	// TODO: Implement logic here, code below is placeholder
+	console.log(req.body);
+	res.json(req.body);
+});
+
 // load routes and connect them to their paths
 var booking = require('./api/routes/booking');
 app.use("/booking", booking);

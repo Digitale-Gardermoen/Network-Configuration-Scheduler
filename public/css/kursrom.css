@@ -21,12 +21,19 @@ body {
 }
 
 header {
-	background-image: linear-gradient(to bottom right, #1F497D, rgb(50,99,159));
 	color: white;
 	font-size: 75px;
 	line-height: 150px;
 	vertical-align: middle;
 	text-align: center;
+}
+
+header.intern, footer.intern {
+	background-image: linear-gradient(to bottom right, #1F497D, rgb(50,99,159));
+}
+
+header.sikker, footer.sikker {
+	background-image: linear-gradient(to bottom right, #dd0000, #ff0000);
 }
 
 main {
