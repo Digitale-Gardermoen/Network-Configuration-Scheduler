@@ -25,6 +25,9 @@ app.use("/switches", switches);
 const room = require('./api/routes/room');
 app.use("/room", room);
 
+const roomConfig = ('./api/routes/roomConfig');
+app.use("/roomConfig", roomConfig);
+
 // listen for requests :)
 var listener = app.listen(process.env.PORT, function () {
 	console.log('Your app is listening on port ' + listener.address().port);

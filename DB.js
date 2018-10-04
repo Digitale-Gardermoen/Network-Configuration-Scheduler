@@ -40,3 +40,20 @@ exports.executeProcedure = async function(callback, query, inputName, inputVal){
         // ... error handler
     })          
 }
+
+exports.executeProcedureNoParam = async function(callback, query) {
+    try {
+        const pool = await sql.connect(dbConfig);
+        const result = await pool.request()
+            .execute(query);
+        sql.close();
+        callback(result);
+    }
+    catch(err) {
+        console.log(err);
+        sql.close();
+    }
+    sql.on('error', err => {
+        // ... error handler
+    })
+}

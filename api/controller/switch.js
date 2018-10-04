@@ -1,7 +1,7 @@
 const sql = require('../../DB')
 
 exports.getSwitches = function(req, res) {
-    sql.executeProcedure(
+    sql.executeProcedureNoParam(
         (result)=>{res.end(JSON.stringify(result.recordset))},
         'Assets.GetSwitches'
     )
