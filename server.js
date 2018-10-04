@@ -6,6 +6,8 @@ const jsonParser = require('body-parser').json();
 var app = express();
 app.use(jsonParser);
 
+app.use("/", express.static(__dirname + "/public"));
+
 // Define root handler for ALL methods, default error for now. 
 app.all("/",function(req, res){
 	res.status(400);
@@ -25,7 +27,7 @@ app.use("/switches", switches);
 const room = require('./api/routes/room');
 app.use("/room", room);
 
-const room = require('./api/routes/vlan');
+const vlan = require('./api/routes/vlan');
 app.use("/vlan", vlan);
 
 // listen for requests :)
