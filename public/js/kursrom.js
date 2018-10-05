@@ -42,6 +42,7 @@ function configureRoom(zone){
 		zone:zone
 	}), (data) => {
 		console.log(data);
+		changeZone(data.zone);
 	});
 }
 
