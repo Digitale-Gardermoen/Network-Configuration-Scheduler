@@ -7,11 +7,18 @@ document.addEventListener("DOMContentLoaded", function(event){
 		configureRoom("sikker");
 	};
 
-	sendRequest('GET','/roomconfig',null,(data)=>{
+	sendRequest('GET','/roomconfig/' + params.room, null,(data)=>{
 		console.log(data);
 		changeZone(data.zone);
 	})
 });
+
+var params = {};
+
+location.search.replace("?","").split("&").forEach( value => {
+	var parts = value.split("=");
+	params[parts[0]] = parts[1];
+ });
 
 function changeZone(zone){
 	var header = document.querySelector("header");
@@ -24,13 +31,6 @@ function changeZone(zone){
 }
 
 function configureRoom(zone){
-	var params = {};
-
-	location.search.replace("?","").split("&").forEach( value => {
-		var parts = value.split("=");
-		params[parts[0]] = parts[1];
-	 });
-
 	var room = params['room'];
 	if(!room){
 		console.log("No room defined");

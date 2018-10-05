@@ -14,11 +14,11 @@ app.all("/",function(req, res){
 	res.json({"message":"Bad request, missing path."})
 });
 
-app.get("/roomconfig", (req, res) => {
+app.get("/roomconfig/:room", (req, res) => {
 	// TODO: Insert actual code here. Below is placeholder for front-end testing
 	var zone = ["intern", "sikker"];
 	res.json({
-		room:"trollololo",
+		room: req.params.room,
 		zone: zone[Math.round(Math.random())]
 	});
 });
