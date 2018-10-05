@@ -44,6 +44,7 @@ main {
 
 .table {
 	display: table;
+	width:100%;
 }
 
 .cell {
@@ -78,6 +79,7 @@ button:focus {
 button#intern {
 	background-color: rgb(79,129,189);
 	background-image: linear-gradient(to bottom right, #1F497D, rgb(50,99,159));
+	border:1px solid #0F396D;
 	color: white;
 }
 
@@ -91,6 +93,7 @@ button#intern:active {
 button#sikker {
 	background-color: rgb(255, 0, 0);
 	background-image: linear-gradient(to bottom right, #dd0000, #ff0000);
+	border:1px solid #bb0000;
 	color: white;
 }
 
