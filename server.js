@@ -27,6 +27,8 @@ app.use("/room", room);
 
 const roomConfig = ('./api/routes/roomConfig');
 app.use("/roomConfig", roomConfig);
+const room = require('./api/routes/vlan');
+app.use("/vlan", vlan);
 
 // listen for requests :)
 var listener = app.listen(process.env.PORT, function () {
