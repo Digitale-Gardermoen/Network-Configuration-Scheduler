@@ -25,9 +25,10 @@ app.use("/switches", switches);
 const room = require('./api/routes/room');
 app.use("/room", room);
 
-const roomConfig = ('./api/routes/roomConfig');
+const roomConfig = require('./api/routes/roomConfig');
 app.use("/roomConfig", roomConfig);
-const room = require('./api/routes/vlan');
+
+const vlan = require('./api/routes/vlan');
 app.use("/vlan", vlan);
 
 // listen for requests :)
