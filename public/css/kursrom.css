@@ -1,0 +1,111 @@
+@import url('https://fonts.googleapis.com/css?family=Lato');
+
+html, body {
+	padding: 0px;
+	margin: 0px;
+	width: 100%;
+	height: 100%;
+	min-width: 760px;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	background-color: #ffffff;
+	color: black;
+	display: grid;
+	grid-template-rows: 150px auto 150px;
+	font-family: 'Leto', sans-serif;
+}
+
+header {
+	color: white;
+	font-size: 75px;
+	line-height: 150px;
+	vertical-align: middle;
+	text-align: center;
+}
+
+header.intern, footer.intern {
+	background-image: linear-gradient(to bottom right, #1F497D, rgb(50,99,159));
+}
+
+header.sikker, footer.sikker {
+	background-image: linear-gradient(to bottom right, #dd0000, #ff0000);
+}
+
+main {
+	min-height: 300px;
+	height: calc(100vh - 300px);
+	text-align: center;
+}
+
+.table {
+	display: table;
+	width:100%;
+}
+
+.cell {
+	display: table-cell;
+	vertical-align: middle;
+	width: 50%;
+	min-width: 50%;
+	max-width: 50%;
+}
+
+#leftCell {
+	text-align: right;
+	padding-right:50px;
+}
+
+#rightCell {
+	text-align: left;
+	padding-left:50px;
+}
+
+.zoneButton {
+	font-size: 3em;
+	width: 300px;
+	height: 210px;
+	cursor: pointer;
+}
+
+button:focus {
+	outline: none;
+}
+
+button#intern {
+	background-color: rgb(79,129,189);
+	background-image: linear-gradient(to bottom right, #1F497D, rgb(50,99,159));
+	border:1px solid #0F396D;
+	color: white;
+}
+
+.zoneButton:hover {
+	box-shadow: 0px 0px 20px 2px rgba(0,0,0,0.3);
+}
+button#intern:active {
+	background-image: linear-gradient(to bottom right, rgb(50,99,159), #1F497D);
+}
+
+button#sikker {
+	background-color: rgb(255, 0, 0);
+	background-image: linear-gradient(to bottom right, #dd0000, #ff0000);
+	border:1px solid #bb0000;
+	color: white;
+}
+
+button#sikker:active {
+	background-image: linear-gradient(to bottom right, #ff0000, #dd0000);
+}
+
+footer {
+	background-image: linear-gradient(to bottom right, #1F497D, rgb(50,99,159));
+	color: white;
+	font-size: 2em;
+	line-height: 150px;
+	vertical-align: middle;
+	text-align: center;
+}
