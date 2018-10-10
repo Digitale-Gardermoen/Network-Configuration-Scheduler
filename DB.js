@@ -40,3 +40,40 @@ exports.executeProcedure = async function(callback, query, inputName, inputVal){
         // ... error handler
     })          
 }
+
+exports.executeProcedureNoParam = async function(callback, query) {
+    try {
+        const pool = await sql.connect(dbConfig);
+        const result = await pool.request()
+            .execute(query);
+        sql.close();
+        callback(result);
+    }
+    catch(err) {
+        console.log(err);
+        sql.close();
+    }
+    sql.on('error', err => {
+        // ... error handler
+    })
+}
+
+exports.executeProcedureTwoParams = async function(callback, query, inputName, inputVal, inputName2, inputVal2){
+    try {
+        const pool = await sql.connect(dbConfig);
+        const result = await pool.request()
+            .input(inputName, inputVal)
+            .input(inputName2, inputVal2)
+            .execute(query);
+        sql.close();
+        //https://www.npmjs.com/package/mssql#close
+        callback(result);
+    }
+    catch(err){
+        console.log(err)
+        sql.close()
+    }
+    sql.on('error', err => {
+        // ... error handler
+    })
+}

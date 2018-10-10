@@ -42,6 +42,9 @@ app.use("/switches", switches);
 const room = require('./api/routes/room');
 app.use("/room", room);
 
+const roomConfig = require('./api/routes/roomConfig');
+app.use("/roomConfig", roomConfig);
+
 const vlan = require('./api/routes/vlan');
 app.use("/vlan", vlan);
 

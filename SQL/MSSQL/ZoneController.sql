@@ -23,6 +23,7 @@ IF OBJECT_ID('Person.GetUsers', 'P')			IS NOT NULL DROP PROCEDURE Person.GetUser
 IF OBJECT_ID('Person.UpdateUser', 'P')			IS NOT NULL DROP PROCEDURE Person.UpdateUser;
 IF OBJECT_ID('Person.RemoveUser', 'P')			IS NOT NULL DROP PROCEDURE Person.RemoveUser;
 IF OBJECT_ID('Person.AddUser', 'P')				IS NOT NULL DROP PROCEDURE Person.AddUser;
+IF OBJECT_ID('Config.GetRoomConfig', 'P')		IS NOT NULL DROP PROCEDURE Config.GetRoomConfig;
 IF OBJECT_ID('Config.GetRoomByID', 'P')			IS NOT NULL DROP PROCEDURE Config.GetRoomByID;
 IF OBJECT_ID('Config.GetRooms', 'P')			IS NOT NULL DROP PROCEDURE Config.GetRooms;
 IF OBJECT_ID('Config.UpdateRoom', 'P')			IS NOT NULL DROP PROCEDURE Config.UpdateRoom;
@@ -97,7 +98,6 @@ CREATE TABLE Assets.Models
 	PRIMARY KEY	(ModelID)
 );
 GO
-
 
 CREATE TABLE Config.Zones
 (
@@ -968,6 +968,33 @@ BEGIN TRY
 					RoomName,
 					VLAN
 			FROM	Config.Rooms
+		END
+	SET NOCOUNT OFF;
+END TRY
+BEGIN CATCH
+	EXEC Auditing.ErrorLogging
+	RETURN 0;
+END CATCH;
+GO
+
+CREATE PROCEDURE Config.GetRoomConfig(
+	@RoomID		INT,
+	@ZoneName	NVARCHAR(50)
+)
+AS
+BEGIN TRY
+	SET NOCOUNT ON;
+		BEGIN
+			SELECT	sw.SwitchName,
+					sw.PortRange,
+					vl.VLANID
+			FROM	Assets.Switches AS sw
+			JOIN	Config.VLANs AS vl
+					ON	sw.SwitchID = vl.SwitchID
+			JOIN	Config.Zones AS zn
+					ON	vl.ZoneID = zn.ZoneID
+					AND	zn.ZoneName = @ZoneName
+			WHERE	sw.RoomID = @RoomID
 		END
 	SET NOCOUNT OFF;
 END TRY
