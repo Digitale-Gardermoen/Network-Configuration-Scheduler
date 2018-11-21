@@ -3,17 +3,35 @@ const SSH2Shell = require("ssh2shell");
 const amqp = require('amqplib/callback_api');
 
 console.log(process.env.AMQP_USER)
+const connectionString = 'amqp://' + process.env.AMQP_USER + ':' +  process.env.AMQP_PASS + '@' + process.env.AMQP_HOST
+console.log(connectionString)
+
+const testMessage = {
+    host: process.env.SSH_HOST,
+    port: 22,
+    username: process.env.SSH_USER,
+    password: process.env.SSH_PASS,
+    commands: [
+        " ",
+        "terminal length 0",
+        "en",
+        "sh vlan | i active"
+    ]
+}
+
+const ssh = createSSHFromMessage(testMessage);
+ssh.connect();
 
 // RabbitMQ connection
-amqp.connect('amqp://' + process.env.AMQP_USER + ':' +  process.env.AMQP_PASS + '@' + process.env.AMQP_HOST, function (err, conn) {
+amqp.connect(connectionString, (err, conn) => {
 
     if (err) {
         console.log(err);
         return;
     }
 
-    // Listen to channel q
-    conn.createChannel(function (err, ch) {
+    // Listen to channel defined in variable q
+    conn.createChannel((err, ch) => {
 
         if (err) {
             console.log(err);
@@ -21,29 +39,31 @@ amqp.connect('amqp://' + process.env.AMQP_USER + ':' +  process.env.AMQP_PASS + 
         }
 
         const q = process.env.AMQP_QUEUE;
-        ch.assertQueue(q, { durable: false });
+        ch.assertQueue(q, { durable: true });
 
         console.log(" [*] Waiting for messages in %s. To exit press CTRL+C", q);
 
         // Get messages in queue
-        ch.consume(q, function (msg) {
+        ch.consume(q, (msg) => {
             console.log(" [x] Received %s", msg.content.toString());
-            /* 
-            // TODO: Generate SSH2Shell config object
-            var ssh = new SSH2Shell(host);
-            ssh.connect();
-            */
+
+            // Create a configured SSH2Shell object from message
+            //const ssh = createSSHFromMessage(msg);
+            //ssh.connect();    // Execute SSH2Shell object
+
         }, { noAck: true });
     });
 });
 
-function test() {
+
+// Returns configured SSH2Shell object
+function createSSHFromMessage(message) {
     const timeout = 10 * 1000;
     const server = {
-        host: "localhost",
-        port: 22,
-        userName: process.env.SSH_USERNAME,
-        password: process.env.SSH_PASSWORD,
+        host: message.host,
+        port: message.port,
+        userName: message.username,
+        password: message.password,
         algorithms: {
             kex: [
                 'diffie-hellman-group1-sha1',
@@ -65,12 +85,12 @@ function test() {
         }
     }
 
-    var hostname = "";
+    let hostname = "";
 
     function onCommandProcessing(command, response, sshObj, stream) {
         //console.log("Command: '" + command + "'", response);
         if (command == "en" && response.indexOf("assword:") != -1 && sshObj.firstRun !== true) {
-            stream.write(process.env.SSH_PASSWORD + "\n");
+            stream.write(process.env.SSH_PASS + "\n");
             sshObj.firstRun = true;
         }
     }
@@ -91,31 +111,17 @@ function test() {
         sshObj.firstRun = false;
     }
 
-    function done(sessionText) {
-        console.log("---------- DONE -----------\n", sessionText);
+    function onEnd(sessionText, sshObj) {
+        console.log("---- End ----")
     }
 
-    const commands = [
-        " ",
-        "terminal length 0",
-        "en",
-        "sh vlan | i active"
-    ];
-
-    var host = {};
+    let host = {};
     host.idleTimeOut = timeout;
     host.server = server;
-    host.commands = commands;
+    host.commands = message.commands;
     host.onCommandComplete = onCommandComplete;
     host.onCommandProcessing = onCommandProcessing;
+    host.onEnd = onEnd;
 
-
-    server.host = "10.252.0.32";
-
-    /**
-     * Below here is the running of the config.
-     */
-
-    var ssh = new SSH2Shell(host);
-    ssh.connect();
+    return new SSH2Shell(host);
 }
